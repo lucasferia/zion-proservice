@@ -37,6 +37,7 @@ function normalizeMaintenance(input: MaintenanceInput) {
     maintenance_type: input.maintenance_type,
     status: input.status,
     scheduled_at: businessDateTimeToIso(input.scheduled_at),
+    next_return_date: input.next_return_date,
     diagnosis: optional(input.diagnosis),
     service_performed: optional(input.service_performed),
     notes: optional(input.notes),
@@ -95,7 +96,7 @@ export async function getMaintenanceFormOptions(
   const [clients, locations, equipment, inventory, technicians] = await Promise.all([
     supabase.from('clients').select('id, name').eq('organization_id', organizationId).is('deleted_at', null).order('name'),
     supabase.from('client_locations').select('id, client_id, name, city, state').eq('organization_id', organizationId).is('deleted_at', null).order('name'),
-    supabase.from('equipment').select('id, client_id, client_location_id, name, category, status').eq('organization_id', organizationId).is('deleted_at', null).neq('status', 'inactive').order('name'),
+    supabase.from('equipment').select('id, name, category, status').eq('organization_id', organizationId).is('deleted_at', null).neq('status', 'inactive').order('name'),
     supabase.from('inventory_items').select('id, name, sku, unit_of_measure, current_quantity, average_unit_cost').eq('organization_id', organizationId).is('deleted_at', null).eq('status', 'active').order('name'),
     supabase.rpc('get_organization_technicians', { target_organization_id: organizationId }),
   ])
@@ -119,7 +120,7 @@ export async function getMaintenanceDetails(organizationId: string, maintenanceI
       .from('maintenances')
       .select(`
         id, organization_id, work_order_number, maintenance_type, status,
-        scheduled_at, diagnosis, service_performed, notes, total_amount,
+        scheduled_at, next_return_date, diagnosis, service_performed, notes, total_amount,
         client_id, client_location_id, equipment_id, responsible_technician_id,
         cancellation_reason, cancelled_at, cancelled_by, completed_at, completed_by,
         created_at, updated_at,
@@ -157,6 +158,7 @@ export async function getMaintenanceDetails(organizationId: string, maintenanceI
     maintenance_type: MaintenanceDetails['maintenance_type']
     status: MaintenanceDetails['status']
     scheduled_at: string
+    next_return_date: string | null
     diagnosis: string | null
     service_performed: string | null
     notes: string | null
@@ -212,6 +214,7 @@ export async function getMaintenanceDetails(organizationId: string, maintenanceI
     maintenance_type: row.maintenance_type,
     status: row.status,
     scheduled_at: row.scheduled_at,
+    next_return_date: row.next_return_date,
     total_amount: row.total_amount,
     client_id: row.client_id,
     client_name: row.clients.name,
@@ -246,6 +249,7 @@ export async function createMaintenance(organizationId: string, input: Maintenan
     equipment_id: normalized.equipment_id,
     maintenance_type: normalized.maintenance_type,
     scheduled_at: normalized.scheduled_at,
+    next_return_date: normalized.next_return_date,
     diagnosis: normalized.diagnosis,
     service_performed: normalized.service_performed,
     notes: normalized.notes,
@@ -352,6 +356,7 @@ export function maintenanceToInput(details: MaintenanceDetails): MaintenanceInpu
     maintenance_type: details.maintenance_type,
     status: details.status === 'in_progress' ? 'in_progress' : 'draft',
     scheduled_at: businessDateTimeLocalValue(details.scheduled_at),
+    next_return_date: details.next_return_date ?? '',
     diagnosis: details.diagnosis ?? '',
     service_performed: details.service_performed ?? '',
     notes: details.notes ?? '',

@@ -10,7 +10,7 @@ export type EquipmentStatus = (typeof EQUIPMENT_STATUSES)[number]['value']
 export type EquipmentSummary = {
   id: string
   organization_id: string
-  client_id: string
+  client_id: string | null
   client_location_id: string | null
   name: string
   category: string
@@ -22,7 +22,7 @@ export type EquipmentSummary = {
   notes: string | null
   created_at: string
   updated_at: string
-  client_name: string
+  client_name: string | null
   location_name: string | null
   location_city: string | null
 }
@@ -30,8 +30,6 @@ export type EquipmentSummary = {
 export type EquipmentDetails = EquipmentSummary
 
 export type EquipmentInput = {
-  client_id: string
-  client_location_id: string
   name: string
   category: string
   brand: string
@@ -43,28 +41,13 @@ export type EquipmentInput = {
 }
 
 export type EquipmentFilters = {
-  clientId: string
-  locationId: string
+  clientId?: string
+  locationId?: string
   category: string
   status: EquipmentStatus | ''
 }
 
-export type EquipmentClientOption = {
-  id: string
-  name: string
-}
-
-export type EquipmentLocationOption = {
-  id: string
-  client_id: string
-  name: string
-  city: string
-  state: string
-}
-
 export type EquipmentFormOptions = {
-  clients: EquipmentClientOption[]
-  locations: EquipmentLocationOption[]
   categories: string[]
 }
 

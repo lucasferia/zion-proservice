@@ -102,14 +102,10 @@ export function EquipmentDetailsPage() {
 
       <div className="equipment-info-grid">
         <article className="info-card equipment-owner-card">
-          <span className="eyebrow">Instalação</span>
+          <span className="eyebrow">Cadastro geral</span>
           <dl>
-            <div>
-              <dt>Cliente</dt>
-              <dd><Link to={`/app/clientes/${details.client_id}`}>{details.client_name}</Link></dd>
-            </div>
-            <div><dt>Unidade</dt><dd>{details.location_name || 'Sem unidade específica'}</dd></div>
-            <div><dt>Cidade</dt><dd>{details.location_city || 'Não informada'}</dd></div>
+            <div><dt>Categoria</dt><dd>{details.category}</dd></div>
+            <div><dt>Status</dt><dd>Disponível para seleção nos relatórios de visita</dd></div>
           </dl>
         </article>
 

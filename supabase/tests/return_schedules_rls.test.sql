@@ -50,17 +50,21 @@ select ok(not exists(select 1 from information_schema.columns where table_schema
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '91000000-0000-4000-8000-000000000001', true);
 
+update public.maintenances
+set next_return_date = current_date + 12
+where id = '91500000-0000-4000-8000-000000000001';
+
 select lives_ok(
   $$ select * from public.complete_maintenance_with_return(
     current_setting('test.return_org_a')::uuid,
     '91500000-0000-4000-8000-000000000001',
     current_date + 10
   ) $$,
-  'conclusão transacional cria retorno com data escolhida'
+  'conclusão transacional usa o reagendamento preenchido no relatório'
 );
 select is((select status from public.maintenances where id = '91500000-0000-4000-8000-000000000001'), 'completed', 'wrapper conclui a manutenção');
 select is((select count(*) from public.return_schedules where origin_maintenance_id = '91500000-0000-4000-8000-000000000001'), 1::bigint, 'wrapper cria exatamente um retorno de origem');
-select is((select scheduled_date from public.return_schedules where origin_maintenance_id = '91500000-0000-4000-8000-000000000001'), current_date + 10, 'retorno preserva a data escolhida');
+select is((select scheduled_date from public.return_schedules where origin_maintenance_id = '91500000-0000-4000-8000-000000000001'), current_date + 12, 'retorno preserva a data definida no relatório');
 select ok((select client_id = '91100000-0000-4000-8000-000000000001' and client_location_id = '91200000-0000-4000-8000-000000000001' and equipment_id = '91300000-0000-4000-8000-000000000001' from public.return_schedules where origin_maintenance_id = '91500000-0000-4000-8000-000000000001'), 'retorno herda todos os vínculos da OS');
 
 select throws_like(
@@ -125,7 +129,7 @@ select is((select next_30_count from public.get_return_schedule_summary(current_
 select throws_like(
   $$ insert into public.return_schedules (organization_id, client_id, client_location_id, equipment_id, scheduled_date)
      values (current_setting('test.return_org_a')::uuid, '91100000-0000-4000-8000-000000000001', '91200000-0000-4000-8000-000000000002', '91300000-0000-4000-8000-000000000001', current_date + 1) $$,
-  '%unidade deve corresponder%', 'trigger bloqueia unidade de outro cliente'
+  '%unidade não pertence ao cliente%', 'trigger bloqueia unidade de outro cliente'
 );
 select throws_like(
   $$ insert into public.return_schedules (organization_id, client_id, client_location_id, equipment_id, scheduled_date)
@@ -135,7 +139,7 @@ select throws_like(
 select throws_like(
   $$ insert into public.return_schedules (organization_id, client_id, client_location_id, equipment_id, scheduled_date)
      values (current_setting('test.return_org_a')::uuid, '91100000-0000-4000-8000-000000000001', '91200000-0000-4000-8000-000000000001', '92300000-0000-4000-8000-000000000001', current_date + 1) $$,
-  '%Equipamento e cliente%', 'trigger bloqueia equipamento cross-tenant'
+  '%Equipamento não encontrado%', 'trigger bloqueia equipamento cross-tenant'
 );
 select throws_like(
   $$ insert into public.return_schedules (organization_id, client_id, client_location_id, equipment_id, scheduled_date)

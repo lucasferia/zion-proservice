@@ -39,16 +39,7 @@ export function CreateEquipmentPage() {
       />
     )
   }
-  if (!options.data?.clients.length) {
-    return (
-      <PageState
-        title="Cadastre um cliente primeiro"
-        description="Todo equipamento precisa pertencer a um cliente ativo antes de ser registrado."
-        actionLabel="Cadastrar cliente"
-        onAction={() => navigate('/app/clientes/novo')}
-      />
-    )
-  }
+  if (!options.data) return null
 
   return (
     <section className="form-page" aria-labelledby="create-equipment-title">
@@ -103,10 +94,6 @@ export function EditEquipmentPage() {
 
   const details = detailsQuery.equipment.data
   const options = optionsQuery.options.data
-  const currentClientIsMissing = !options.clients.some((client) => client.id === details.client_id)
-  const compatibleOptions = currentClientIsMissing
-    ? { ...options, clients: [{ id: details.client_id, name: `${details.client_name} (arquivado)` }, ...options.clients] }
-    : options
 
   return (
     <section className="form-page" aria-labelledby="edit-equipment-title">
@@ -114,7 +101,7 @@ export function EditEquipmentPage() {
       <span id="edit-equipment-title" className="sr-only">Editar equipamento</span>
       <EquipmentForm
         initialValue={equipmentToInput(details)}
-        options={compatibleOptions}
+        options={options}
         submitLabel="Salvar alterações"
         onSubmit={async (input: EquipmentInput) => {
           await updateEquipment(organization.data!, details.id, input)

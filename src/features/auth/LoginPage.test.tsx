@@ -33,7 +33,7 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     )
 
-    await user.type(screen.getByLabelText('E-mail'), '  tecnico@zion.com  ')
+    await user.type(screen.getByLabelText('Usuário ou e-mail'), '  tecnico@zion.com  ')
     await user.type(screen.getByLabelText('Senha'), 'senha-segura')
     await user.click(screen.getByRole('button', { name: 'Entrar no ProService' }))
 
@@ -50,7 +50,7 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     )
 
-    await user.type(screen.getByLabelText('E-mail'), 'tecnico@zion.com')
+    await user.type(screen.getByLabelText('Usuário ou e-mail'), 'tecnico@zion.com')
     await user.type(screen.getByLabelText('Senha'), 'incorreta')
     await user.click(screen.getByRole('button', { name: 'Entrar no ProService' }))
 

@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { hasValidationErrors, type FieldErrors } from '../clients/validation'
+import { todayValue } from '../returns/formatters'
 import {
   MAINTENANCE_TYPES,
   type MaintenanceFormOptions,
@@ -27,33 +28,21 @@ export function MaintenanceForm({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const availableEquipment = useMemo(
-    () => options.equipment.filter((equipment) => equipment.client_id === input.client_id),
-    [input.client_id, options.equipment],
+  const availableLocations = useMemo(
+    () => options.locations.filter((location) => location.client_id === input.client_id),
+    [input.client_id, options.locations],
   )
-  const selectedEquipment = options.equipment.find((equipment) => equipment.id === input.equipment_id)
-  const selectedLocation = options.locations.find((location) => location.id === input.client_location_id)
 
   function updateField<Key extends keyof MaintenanceInput>(field: Key, value: MaintenanceInput[Key]) {
     setInput((current) => {
       if (field === 'client_id') {
-        const equipmentStillValid = options.equipment.some(
-          (equipment) => equipment.id === current.equipment_id && equipment.client_id === value,
+        const locationStillValid = options.locations.some(
+          (location) => location.id === current.client_location_id && location.client_id === value,
         )
         return {
           ...current,
           client_id: value as string,
-          equipment_id: equipmentStillValid ? current.equipment_id : '',
-          client_location_id: equipmentStillValid ? current.client_location_id : '',
-        }
-      }
-      if (field === 'equipment_id') {
-        const equipment = options.equipment.find((item) => item.id === value)
-        return {
-          ...current,
-          equipment_id: value as string,
-          client_id: equipment?.client_id ?? current.client_id,
-          client_location_id: equipment?.client_location_id ?? '',
+          client_location_id: locationStillValid ? current.client_location_id : '',
         }
       }
       return { ...current, [field]: value }
@@ -84,7 +73,7 @@ export function MaintenanceForm({
     <form className="record-form maintenance-form" onSubmit={handleSubmit} noValidate>
       <div className="form-section-heading">
         <span className="form-section-heading__index" aria-hidden="true">01</span>
-        <div><h2>Atendimento</h2><p>O equipamento define automaticamente cliente e unidade, evitando vínculos incorretos em campo.</p></div>
+        <div><h2>Contexto da visita</h2><p>Informe separadamente quem recebeu o atendimento, a unidade visitada e o equipamento do catálogo geral.</p></div>
       </div>
       <div className="form-grid">
         <div className="field">
@@ -97,15 +86,19 @@ export function MaintenanceForm({
         </div>
         <div className="field">
           <label htmlFor="maintenance-equipment">Equipamento <span aria-hidden="true">*</span></label>
-          <select id="maintenance-equipment" value={input.equipment_id} onChange={(event) => updateField('equipment_id', event.target.value)} disabled={!input.client_id} aria-invalid={Boolean(errors.equipment_id)}>
+          <select id="maintenance-equipment" value={input.equipment_id} onChange={(event) => updateField('equipment_id', event.target.value)} aria-invalid={Boolean(errors.equipment_id)}>
             <option value="">Selecione o equipamento</option>
-            {availableEquipment.map((equipment) => <option key={equipment.id} value={equipment.id}>{equipment.name} · {equipment.category}</option>)}
+            {options.equipment.map((equipment) => <option key={equipment.id} value={equipment.id}>{equipment.name} · {equipment.category}</option>)}
           </select>
           {errors.equipment_id && <span className="field-error">{errors.equipment_id}</span>}
         </div>
         <div className="field">
-          <label htmlFor="maintenance-location">Unidade vinculada</label>
-          <input id="maintenance-location" value={selectedLocation ? `${selectedLocation.name} · ${selectedLocation.city}/${selectedLocation.state}` : selectedEquipment ? 'Sem unidade específica' : ''} readOnly placeholder="Definida pelo equipamento" />
+          <label htmlFor="maintenance-location">Unidade visitada</label>
+          <select id="maintenance-location" value={input.client_location_id} onChange={(event) => updateField('client_location_id', event.target.value)} disabled={!input.client_id}>
+            <option value="">Sem unidade específica</option>
+            {availableLocations.map((location) => <option key={location.id} value={location.id}>{location.name} · {location.city}/{location.state}</option>)}
+          </select>
+          <span className="field-help">Opcional. As unidades exibidas pertencem ao cliente selecionado.</span>
         </div>
         <div className="field">
           <label htmlFor="maintenance-scheduled">Data e hora <span aria-hidden="true">*</span></label>
@@ -139,7 +132,7 @@ export function MaintenanceForm({
 
       <div className="form-section-heading form-section-heading--divided">
         <span className="form-section-heading__index" aria-hidden="true">02</span>
-        <div><h2>Registro técnico</h2><p>Diagnóstico e serviço realizado serão obrigatórios no momento da conclusão.</p></div>
+        <div><h2>Relatório e próximo contato</h2><p>Registre o trabalho executado e deixe o reagendamento definido antes de concluir a OS.</p></div>
       </div>
       <div className="form-grid maintenance-notes-grid">
         <div className="field field--wide">
@@ -156,7 +149,13 @@ export function MaintenanceForm({
           <label htmlFor="maintenance-amount">Valor total informado</label>
           <div className="money-input"><span>R$</span><input id="maintenance-amount" inputMode="decimal" value={input.total_amount} onChange={(event) => updateField('total_amount', event.target.value)} aria-invalid={Boolean(errors.total_amount)} /></div>
           {errors.total_amount && <span className="field-error">{errors.total_amount}</span>}
-          <span className="field-help">Pagamentos serão tratados em uma etapa futura.</span>
+          <span className="field-help">O recebimento é registrado separadamente na área financeira.</span>
+        </div>
+        <div className="field">
+          <label htmlFor="maintenance-return-date">Data de reagendamento <span aria-hidden="true">*</span></label>
+          <input id="maintenance-return-date" type="date" min={todayValue()} value={input.next_return_date} onChange={(event) => updateField('next_return_date', event.target.value)} aria-invalid={Boolean(errors.next_return_date)} />
+          {errors.next_return_date && <span className="field-error">{errors.next_return_date}</span>}
+          <span className="field-help">Ao concluir a OS, esta data entrará automaticamente na agenda.</span>
         </div>
         <div className="field field--wide">
           <label htmlFor="maintenance-notes">Observações</label>

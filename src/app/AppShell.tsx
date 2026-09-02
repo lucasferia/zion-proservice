@@ -84,6 +84,9 @@ function navItemClass({ isActive }: { isActive: boolean }) {
 
 export function AppShell() {
   const { session, signOut } = useAuth()
+  const accountLabel = typeof session?.user.user_metadata.full_name === 'string'
+    ? session.user.user_metadata.full_name
+    : session?.user.email
 
   return (
     <div className="app-shell">
@@ -129,8 +132,8 @@ export function AppShell() {
 
         <div className="side-rail__account">
           <span className="eyebrow">Sessão ativa</span>
-          <span className="account-email" title={session?.user.email}>
-            {session?.user.email}
+          <span className="account-email" title={accountLabel}>
+            {accountLabel}
           </span>
           <button className="text-button" type="button" onClick={() => void signOut()}>
             <ExitIcon />

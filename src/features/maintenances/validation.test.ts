@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { datePlusDays } from '../returns/formatters'
 import type { MaintenanceInput } from './types'
 import {
   validateCompletion,
@@ -13,6 +14,7 @@ const validInput: MaintenanceInput = {
   maintenance_type: 'corrective',
   status: 'draft',
   scheduled_at: '2026-08-31T14:00',
+  next_return_date: datePlusDays(30),
   diagnosis: 'Correia desgastada',
   service_performed: 'Substituição da correia',
   notes: '',
@@ -53,10 +55,12 @@ describe('validações de manutenção', () => {
     expect(validateCompletion({
       diagnosis: '',
       service_performed: null,
+      next_return_date: null,
       parts: [{ quantity: 4, available_quantity: 2, item_name: 'Correia' }],
     })).toEqual([
       'Informe o diagnóstico.',
       'Informe o serviço realizado.',
+      'Informe a data de reagendamento no relatório.',
       'Correia: saldo insuficiente.',
     ])
   })

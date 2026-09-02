@@ -69,7 +69,7 @@ export async function getReturnScheduleOptions(organizationId: string): Promise<
   const [clients, locations, equipment] = await Promise.all([
     supabase.from('clients').select('id, name').eq('organization_id', organizationId).is('deleted_at', null).order('name'),
     supabase.from('client_locations').select('id, client_id, name, city, state').eq('organization_id', organizationId).is('deleted_at', null).order('name'),
-    supabase.from('equipment').select('id, client_id, client_location_id, name, category').eq('organization_id', organizationId).is('deleted_at', null).neq('status', 'inactive').order('name'),
+    supabase.from('equipment').select('id, name, category').eq('organization_id', organizationId).is('deleted_at', null).neq('status', 'inactive').order('name'),
   ])
   const error = clients.error ?? locations.error ?? equipment.error
   if (error) throw new Error(friendlyReturnError(error))

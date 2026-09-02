@@ -133,7 +133,7 @@ select is(
   (select count(*) from public.search_equipment(
     (select organization_id from public.clients where id = '41100000-0000-4000-8000-000000000001'),
     'Academia A', null, null, null, null
-  )), 1::bigint, 'busca encontra equipamento pelo cliente'
+  )), 0::bigint, 'catálogo geral não usa o nome do cliente na busca do equipamento'
 );
 
 select is(

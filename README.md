@@ -1,6 +1,6 @@
 # ZION ProService
 
-Sistema web multi-tenant para a operação de manutenção de equipamentos fitness. O MVP cobre clientes e unidades, equipamentos, estoque, ordens de serviço com consumo transacional de peças, fotos privadas, pagamentos, retornos e dashboard operacional.
+Sistema web multi-tenant para a operação de manutenção de equipamentos fitness. O MVP cobre clientes e unidades, catálogo geral de equipamentos, estoque, ordens de serviço com consumo transacional de peças, fotos privadas, pagamentos, retornos e dashboard operacional.
 
 ## Stack e requisitos
 
@@ -89,8 +89,8 @@ Na tela do cliente, use **Ficha imprimível**. Na tela da manutenção, use **Im
    ```
 
 3. No provedor do frontend, configure apenas `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` como variáveis de build.
-4. Use `npm ci` como instalação, `npm run build` como build e `dist` como diretório publicado.
-5. Configure fallback de SPA para `index.html` e cadastre a URL pública em **Authentication → URL Configuration** no Supabase.
+4. Na Vercel, use o preset **Vite**, `npm ci` como instalação, `npm run build` como build e `dist` como diretório publicado. O `vercel.json` versionado já redireciona rotas do React Router para `index.html`.
+5. Cadastre a URL pública da Vercel em **Authentication → URL Configuration** no Supabase.
 6. Execute o smoke test autenticado após o deploy.
 
 Antes de `db push`, revise a lista de migrations com `npx supabase migration list`. Chaves e senhas nunca devem aparecer em scripts, documentação, logs ou commits.

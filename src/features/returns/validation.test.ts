@@ -10,8 +10,8 @@ const options: ReturnScheduleOptions = {
     { id: 'location-b', client_id: 'client-b', name: 'Filial', city: 'São Paulo', state: 'SP' },
   ],
   equipment: [
-    { id: 'equipment-a', client_id: 'client-a', client_location_id: 'location-a', name: 'Esteira', category: 'Cardio' },
-    { id: 'equipment-b', client_id: 'client-b', client_location_id: 'location-b', name: 'Bike', category: 'Cardio' },
+    { id: 'equipment-a', name: 'Esteira', category: 'Cardio' },
+    { id: 'equipment-b', name: 'Bike', category: 'Cardio' },
   ],
   cities: ['Curitiba', 'São Paulo'],
 }
@@ -21,14 +21,14 @@ function validInput(): ReturnScheduleInput {
 }
 
 describe('return schedule validation', () => {
-  it('aceita somente o conjunto coerente de cliente, unidade e equipamento', () => {
+  it('aceita equipamento geral e exige que a unidade pertença ao cliente', () => {
     expect(validateReturnSchedule(validInput(), options)).toEqual({})
 
-    const crossClient = validateReturnSchedule({ ...validInput(), client_id: 'client-b' }, options)
-    expect(crossClient.equipment_id).toMatch(/não pertence ao cliente/i)
+    const otherEquipment = validateReturnSchedule({ ...validInput(), equipment_id: 'equipment-b' }, options)
+    expect(otherEquipment).toEqual({})
 
     const crossLocation = validateReturnSchedule({ ...validInput(), client_location_id: 'location-b' }, options)
-    expect(crossLocation.client_location_id).toMatch(/corresponder ao equipamento/i)
+    expect(crossLocation.client_location_id).toMatch(/pertencer ao cliente/i)
   })
 
   it('bloqueia agendamento no passado e observação acima do limite', () => {

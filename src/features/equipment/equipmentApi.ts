@@ -21,8 +21,6 @@ function optional(value: string) {
 
 function normalizeEquipment(input: EquipmentInput) {
   return {
-    client_id: input.client_id,
-    client_location_id: input.client_location_id || null,
     name: input.name.trim(),
     category: input.category.trim(),
     brand: optional(input.brand),
@@ -57,28 +55,14 @@ export async function getEquipmentFormOptions(
   organizationId: string,
 ): Promise<EquipmentFormOptions> {
   const supabase = requireClient()
-  const [clientsResult, locationsResult, categoriesResult] = await Promise.all([
-    supabase
-      .from('clients')
-      .select('id, name')
-      .eq('organization_id', organizationId)
-      .is('deleted_at', null)
-      .order('name'),
-    supabase
-      .from('client_locations')
-      .select('id, client_id, name, city, state')
-      .eq('organization_id', organizationId)
-      .is('deleted_at', null)
-      .order('name'),
-    supabase
-      .from('equipment')
-      .select('category')
-      .eq('organization_id', organizationId)
-      .is('deleted_at', null)
-      .order('category'),
-  ])
+  const categoriesResult = await supabase
+    .from('equipment')
+    .select('category')
+    .eq('organization_id', organizationId)
+    .is('deleted_at', null)
+    .order('category')
 
-  const error = clientsResult.error ?? locationsResult.error ?? categoriesResult.error
+  const error = categoriesResult.error
   if (error) throw new Error(friendlyDataError(error))
 
   const categories = Array.from(
@@ -86,8 +70,6 @@ export async function getEquipmentFormOptions(
   ).sort((a, b) => a.localeCompare(b, 'pt-BR'))
 
   return {
-    clients: clientsResult.data ?? [],
-    locations: locationsResult.data ?? [],
     categories,
   }
 }
@@ -99,8 +81,6 @@ export async function getEquipmentDetails(organizationId: string, equipmentId: s
     .select(`
       id,
       organization_id,
-      client_id,
-      client_location_id,
       name,
       category,
       brand,
@@ -110,9 +90,7 @@ export async function getEquipmentDetails(organizationId: string, equipmentId: s
       status,
       notes,
       created_at,
-      updated_at,
-      clients!equipment_client_organization_fk (name),
-      client_locations!equipment_location_client_organization_fk (name, city)
+      updated_at
     `)
     .eq('organization_id', organizationId)
     .eq('id', equipmentId)
@@ -124,8 +102,6 @@ export async function getEquipmentDetails(organizationId: string, equipmentId: s
   const row = data as unknown as {
     id: string
     organization_id: string
-    client_id: string
-    client_location_id: string | null
     name: string
     category: string
     brand: string | null
@@ -136,15 +112,13 @@ export async function getEquipmentDetails(organizationId: string, equipmentId: s
     notes: string | null
     created_at: string
     updated_at: string
-    clients: { name: string }
-    client_locations: { name: string; city: string } | null
   }
 
   return {
     id: row.id,
     organization_id: row.organization_id,
-    client_id: row.client_id,
-    client_location_id: row.client_location_id,
+    client_id: null,
+    client_location_id: null,
     name: row.name,
     category: row.category,
     brand: row.brand,
@@ -155,9 +129,9 @@ export async function getEquipmentDetails(organizationId: string, equipmentId: s
     notes: row.notes,
     created_at: row.created_at,
     updated_at: row.updated_at,
-    client_name: row.clients.name,
-    location_name: row.client_locations?.name ?? null,
-    location_city: row.client_locations?.city ?? null,
+    client_name: null,
+    location_name: null,
+    location_city: null,
   } satisfies EquipmentDetails
 }
 
@@ -207,8 +181,6 @@ export async function archiveEquipment(organizationId: string, equipmentId: stri
 
 export function equipmentToInput(equipment: EquipmentDetails): EquipmentInput {
   return {
-    client_id: equipment.client_id,
-    client_location_id: equipment.client_location_id ?? '',
     name: equipment.name,
     category: equipment.category,
     brand: equipment.brand ?? '',

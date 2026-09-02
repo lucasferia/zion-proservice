@@ -17,7 +17,6 @@ export function validateEquipment(input: EquipmentInput): FieldErrors<EquipmentI
   const serialNumber = input.serial_number.trim()
   const assetTag = input.asset_tag.trim()
 
-  if (!input.client_id) errors.client_id = 'Selecione o cliente responsável pelo equipamento.'
   if (name.length < 2) errors.name = 'Informe um nome com pelo menos 2 caracteres.'
   if (name.length > 160) errors.name = 'O nome deve ter no máximo 160 caracteres.'
   if (category.length < 2) errors.category = 'Informe uma categoria com pelo menos 2 caracteres.'

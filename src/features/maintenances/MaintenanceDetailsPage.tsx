@@ -6,7 +6,7 @@ import { equipmentKeys } from '../equipment/equipmentQueries'
 import { formatInventoryCurrency, formatInventoryQuantity } from '../inventory/formatters'
 import { inventoryKeys } from '../inventory/inventoryQueries'
 import { MaintenanceFinancialSection } from '../payments/MaintenanceFinancialSection'
-import { datePlusDays, formatReturnDate, todayValue } from '../returns/formatters'
+import { formatReturnDate } from '../returns/formatters'
 import { returnKeys } from '../returns/returnQueries'
 import { formatMaintenanceCurrency, formatMaintenanceDate } from './formatters'
 import {
@@ -40,7 +40,6 @@ export function MaintenanceDetailsPage() {
   const routedSuccess = (location.state as { success?: string } | null)?.success
   const [confirmation, setConfirmation] = useState<'complete' | 'cancel' | null>(null)
   const [cancellationReason, setCancellationReason] = useState('')
-  const [returnDate, setReturnDate] = useState(() => datePlusDays(30))
   const [actionError, setActionError] = useState<string | null>(null)
   const [actionSuccess, setActionSuccess] = useState<string | null>(null)
   const [isActing, setIsActing] = useState(false)
@@ -57,11 +56,6 @@ export function MaintenanceDetailsPage() {
   const details = maintenance.data
   const open = isMaintenanceOpen(details.status)
   const completionErrors = validateCompletion(details)
-  const returnDateError = !returnDate
-    ? 'Informe a data do próximo retorno.'
-    : returnDate < todayValue()
-      ? 'A data do retorno não pode estar no passado.'
-      : null
   const frozenPartsCost = details.status === 'cancelled'
     ? 0
     : details.parts.reduce(
@@ -76,21 +70,21 @@ export function MaintenanceDetailsPage() {
   }
 
   async function handleComplete() {
-    if (returnDateError) {
-      setActionError(returnDateError)
+    if (!details.next_return_date) {
+      setActionError('Informe a data de reagendamento no relatório antes de concluir.')
       return
     }
     setIsActing(true)
     setActionError(null)
     try {
-      await completeMaintenance(organization.data!, details.id, returnDate)
+      await completeMaintenance(organization.data!, details.id, details.next_return_date)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: maintenanceKeys.all }),
         queryClient.invalidateQueries({ queryKey: inventoryKeys.all }),
         queryClient.invalidateQueries({ queryKey: equipmentKeys.all }),
         queryClient.invalidateQueries({ queryKey: returnKeys.all }),
       ])
-      setActionSuccess(`Manutenção concluída, estoque atualizado e retorno agendado para ${formatReturnDate(returnDate)}.`)
+      setActionSuccess(`Manutenção concluída, estoque atualizado e retorno agendado para ${formatReturnDate(details.next_return_date)}.`)
       setConfirmation(null)
     } catch (completeError) {
       setActionError(completeError instanceof Error ? completeError.message : 'Não foi possível concluir a manutenção.')
@@ -157,14 +151,12 @@ export function MaintenanceDetailsPage() {
             <small>custo estimado do estoque</small>
           </div>
           {completionErrors.length > 0 && <ul className="completion-errors">{completionErrors.map((item) => <li key={item}>{item}</li>)}</ul>}
-          <label className="field completion-return-date">
-            <span>Próximo retorno <span aria-hidden="true">*</span></span>
-            <input type="date" min={todayValue()} value={returnDate} onChange={(event) => { setReturnDate(event.target.value); setActionError(null) }} aria-invalid={Boolean(returnDateError)} />
-            <small>Esta data cria um compromisso pendente na agenda.</small>
-            {returnDateError && <span className="field-error">{returnDateError}</span>}
-          </label>
+          <div className="completion-return-summary">
+            <span>Reagendamento definido no relatório</span>
+            <strong>{details.next_return_date ? formatReturnDate(details.next_return_date) : 'Não informado'}</strong>
+          </div>
           <div className="confirmation-actions">
-            <button className="primary-button primary-button--compact" type="button" disabled={isActing || completionErrors.length > 0 || Boolean(returnDateError)} onClick={() => void handleComplete()}>{isActing ? 'Concluindo…' : 'Concluir e agendar retorno'}</button>
+            <button className="primary-button primary-button--compact" type="button" disabled={isActing || completionErrors.length > 0} onClick={() => void handleComplete()}>{isActing ? 'Concluindo…' : 'Concluir e agendar retorno'}</button>
             <button className="secondary-button" type="button" disabled={isActing} onClick={() => setConfirmation(null)}>Voltar</button>
           </div>
         </section>
@@ -193,6 +185,7 @@ export function MaintenanceDetailsPage() {
           <dl>
             <div><dt>Técnico</dt><dd>{details.technician_name}</dd></div>
             <div><dt>Atendimento</dt><dd>{formatMaintenanceDate(details.scheduled_at)}</dd></div>
+            <div><dt>Reagendamento</dt><dd>{details.next_return_date ? formatReturnDate(details.next_return_date) : 'Não informado'}</dd></div>
             <div><dt>Valor informado</dt><dd>{formatMaintenanceCurrency(details.total_amount)}</dd></div>
             <div><dt>Peças</dt><dd>{details.part_count}</dd></div>
           </dl>

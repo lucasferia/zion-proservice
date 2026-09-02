@@ -9,10 +9,10 @@ export function validateReturnSchedule(input: ReturnScheduleInput, options: Retu
   if (!input.client_id) errors.client_id = 'Selecione o cliente.'
   if (!equipment) {
     errors.equipment_id = 'Selecione um equipamento ativo.'
-  } else {
-    if (equipment.client_id !== input.client_id) errors.equipment_id = 'O equipamento não pertence ao cliente selecionado.'
-    if ((equipment.client_location_id ?? '') !== input.client_location_id) errors.client_location_id = 'A unidade deve corresponder ao equipamento.'
   }
+  if (input.client_location_id && !options.locations.some(
+    (location) => location.id === input.client_location_id && location.client_id === input.client_id,
+  )) errors.client_location_id = 'A unidade deve pertencer ao cliente selecionado.'
   if (!input.scheduled_date) errors.scheduled_date = 'Informe a data do retorno.'
   else if (input.scheduled_date < todayValue()) errors.scheduled_date = 'A data não pode estar no passado.'
   if (input.notes.length > 2000) errors.notes = 'As observações devem ter no máximo 2.000 caracteres.'

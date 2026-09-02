@@ -277,7 +277,7 @@ select throws_like(
   'banco impede equipamento cross-tenant'
 );
 
-select throws_like(
+select lives_ok(
   $$
     insert into public.maintenances (
       organization_id, client_id, client_location_id, equipment_id,
@@ -290,8 +290,7 @@ select throws_like(
       'corrective', now(), '61000000-0000-4000-8000-000000000001'
     )
   $$,
-  '%corresponder%',
-  'banco impede cliente e unidade incompatíveis com o equipamento'
+  'OS define cliente e unidade independentemente do equipamento geral'
 );
 
 select throws_like(
@@ -546,7 +545,7 @@ select is(
     current_setting('test.maintenance_org_a')::uuid,
     'Atlas', null, null, null, null, null
   )),
-  3::bigint,
+  4::bigint,
   'busca encontra OS pelo cliente e equipamento'
 );
 select is(
@@ -562,12 +561,12 @@ select is(
     current_setting('test.maintenance_org_a')::uuid,
     null, null, null, null, null, '61300000-0000-4000-8000-000000000001'
   )),
-  3::bigint,
+  4::bigint,
   'filtro por equipamento alimenta o histórico real'
 );
 
 select set_config('request.jwt.claim.sub', '63000000-0000-4000-8000-000000000003', true);
-select is((select count(*) from public.maintenances), 4::bigint, 'technician ativo visualiza OS do tenant');
+select is((select count(*) from public.maintenances), 5::bigint, 'technician ativo visualiza OS do tenant');
 select is(
   (select count(*) from public.get_organization_technicians(current_setting('test.maintenance_org_a')::uuid)),
   2::bigint,

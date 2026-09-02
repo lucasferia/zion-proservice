@@ -98,7 +98,13 @@ export function MaintenancePrintableDocument({ record, onPhotoSettled }: Documen
         <div className="print-section__heading"><span>05</span><h2 id="return-report-title">Retorno programado</h2></div>
         {record.scheduled_return ? (
           <div className="print-return-card"><div><span>Data</span><strong>{formatReturnDate(record.scheduled_return.scheduled_date)}</strong></div><div><span>Status</span><strong>{getReturnStatusLabel(record.scheduled_return.status)}</strong></div><p>{record.scheduled_return.notes || 'Sem orientação adicional.'}</p>{record.scheduled_return.cancellation_reason && <small>Motivo: {record.scheduled_return.cancellation_reason}</small>}</div>
-        ) : <p className="print-empty">Nenhum retorno foi criado a partir desta manutenção.</p>}
+        ) : maintenance.next_return_date ? (
+          <div className="print-return-card">
+            <div><span>Data prevista no relatório</span><strong>{formatReturnDate(maintenance.next_return_date)}</strong></div>
+            <div><span>Status</span><strong>Aguardando conclusão da OS</strong></div>
+            <p>O compromisso será criado na agenda quando esta manutenção for concluída.</p>
+          </div>
+        ) : <p className="print-empty">Nenhum retorno foi definido neste relatório.</p>}
       </section>
 
       <section className="print-section print-photo-section" aria-labelledby="photo-report-title">

@@ -1,4 +1,5 @@
 import type { FieldErrors } from '../clients/validation'
+import { todayValue } from '../returns/formatters'
 import type { MaintenanceInput, MaintenancePartInput } from './types'
 
 export function parseDecimal(value: string) {
@@ -18,6 +19,11 @@ export function validateMaintenance(input: MaintenanceInput): FieldErrors<Mainte
   }
   if (!input.scheduled_at || Number.isNaN(new Date(input.scheduled_at).getTime())) {
     errors.scheduled_at = 'Informe uma data e hora válidas.'
+  }
+  if (!input.next_return_date) {
+    errors.next_return_date = 'Informe a data de reagendamento.'
+  } else if (input.next_return_date < todayValue()) {
+    errors.next_return_date = 'A data de reagendamento não pode estar no passado.'
   }
   if (!['preventive', 'corrective'].includes(input.maintenance_type)) {
     errors.maintenance_type = 'Selecione um tipo válido.'
@@ -57,11 +63,14 @@ export function validateMaintenancePart(
 export function validateCompletion(details: {
   diagnosis: string | null
   service_performed: string | null
+  next_return_date: string | null
   parts: Array<{ quantity: number; available_quantity: number; item_name: string }>
 }) {
   const errors: string[] = []
   if ((details.diagnosis ?? '').trim().length < 3) errors.push('Informe o diagnóstico.')
   if ((details.service_performed ?? '').trim().length < 3) errors.push('Informe o serviço realizado.')
+  if (!details.next_return_date) errors.push('Informe a data de reagendamento no relatório.')
+  else if (details.next_return_date < todayValue()) errors.push('A data de reagendamento não pode estar no passado.')
   for (const part of details.parts) {
     if (part.quantity > part.available_quantity) {
       errors.push(`${part.item_name}: saldo insuficiente.`)

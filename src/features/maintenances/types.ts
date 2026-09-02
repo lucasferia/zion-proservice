@@ -21,6 +21,7 @@ export type MaintenanceSummary = {
   maintenance_type: MaintenanceType
   status: MaintenanceStatus
   scheduled_at: string
+  next_return_date: string | null
   total_amount: number
   client_id: string
   client_name: string
@@ -72,6 +73,7 @@ export type MaintenanceInput = {
   maintenance_type: MaintenanceType
   status: EditableMaintenanceStatus
   scheduled_at: string
+  next_return_date: string
   diagnosis: string
   service_performed: string
   notes: string
@@ -96,8 +98,6 @@ export type MaintenanceLocationOption = {
 }
 export type MaintenanceEquipmentOption = {
   id: string
-  client_id: string
-  client_location_id: string | null
   name: string
   category: string
   status: string

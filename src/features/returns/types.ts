@@ -60,7 +60,7 @@ export type ReturnScheduleInput = {
 
 export type ReturnClientOption = { id: string; name: string }
 export type ReturnLocationOption = { id: string; client_id: string; name: string; city: string; state: string }
-export type ReturnEquipmentOption = { id: string; client_id: string; client_location_id: string | null; name: string; category: string }
+export type ReturnEquipmentOption = { id: string; name: string; category: string }
 
 export type ReturnScheduleOptions = {
   clients: ReturnClientOption[]

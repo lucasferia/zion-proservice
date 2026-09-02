@@ -1,11 +1,9 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { hasValidationErrors, type FieldErrors } from '../clients/validation'
 import { EQUIPMENT_STATUSES, type EquipmentFormOptions, type EquipmentInput } from './types'
 import { validateEquipment } from './validation'
 
 const emptyEquipment: EquipmentInput = {
-  client_id: '',
-  client_location_id: '',
   name: '',
   category: '',
   brand: '',
@@ -34,25 +32,8 @@ export function EquipmentForm({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const availableLocations = useMemo(
-    () => options.locations.filter((location) => location.client_id === input.client_id),
-    [input.client_id, options.locations],
-  )
-
   function updateField<Key extends keyof EquipmentInput>(field: Key, value: EquipmentInput[Key]) {
-    setInput((current) => {
-      if (field === 'client_id') {
-        const selectedLocation = options.locations.find(
-          (location) => location.id === current.client_location_id,
-        )
-        return {
-          ...current,
-          client_id: value as string,
-          client_location_id: selectedLocation?.client_id === value ? current.client_location_id : '',
-        }
-      }
-      return { ...current, [field]: value }
-    })
+    setInput((current) => ({ ...current, [field]: value }))
     if (errors[field]) setErrors((current) => ({ ...current, [field]: undefined }))
   }
 
@@ -81,58 +62,8 @@ export function EquipmentForm({
       <div className="form-section-heading">
         <span className="form-section-heading__index" aria-hidden="true">01</span>
         <div>
-          <h2>Vínculo operacional</h2>
-          <p>O cliente é obrigatório. A lista de unidades sempre acompanha o cliente selecionado.</p>
-        </div>
-      </div>
-
-      <div className="form-grid">
-        <div className="field">
-          <label htmlFor="equipment-client">Cliente <span aria-hidden="true">*</span></label>
-          <select
-            id="equipment-client"
-            value={input.client_id}
-            onChange={(event) => updateField('client_id', event.target.value)}
-            aria-invalid={Boolean(errors.client_id)}
-            aria-describedby={errors.client_id ? 'equipment-client-error' : undefined}
-            autoFocus
-          >
-            <option value="">Selecione um cliente</option>
-            {options.clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}
-          </select>
-          {errors.client_id && <span id="equipment-client-error" className="field-error">{errors.client_id}</span>}
-        </div>
-
-        <div className="field">
-          <label htmlFor="equipment-location">Unidade</label>
-          <select
-            id="equipment-location"
-            value={input.client_location_id}
-            onChange={(event) => updateField('client_location_id', event.target.value)}
-            disabled={!input.client_id || availableLocations.length === 0}
-          >
-            <option value="">Sem unidade específica</option>
-            {availableLocations.map((location) => (
-              <option key={location.id} value={location.id}>
-                {location.name} · {location.city}/{location.state}
-              </option>
-            ))}
-          </select>
-          <span className="field-help">
-            {!input.client_id
-              ? 'Selecione primeiro um cliente.'
-              : availableLocations.length === 0
-                ? 'Este cliente ainda não possui unidades ativas.'
-                : 'Opcional. Escolha onde o equipamento está instalado.'}
-          </span>
-        </div>
-      </div>
-
-      <div className="form-section-heading form-section-heading--divided">
-        <span className="form-section-heading__index" aria-hidden="true">02</span>
-        <div>
-          <h2>Identificação do ativo</h2>
-          <p>Use os códigos existentes na máquina para facilitar visitas e futuras manutenções.</p>
+          <h2>Identificação do equipamento</h2>
+          <p>Este é um cadastro geral da organização. Cliente e unidade serão informados somente no relatório da visita.</p>
         </div>
       </div>
 
@@ -147,6 +78,7 @@ export function EquipmentForm({
             aria-describedby={errors.name ? 'equipment-name-error' : undefined}
             placeholder="Ex.: Esteira Performance 01"
             maxLength={160}
+            autoFocus
           />
           {errors.name && <span id="equipment-name-error" className="field-error">{errors.name}</span>}
         </div>

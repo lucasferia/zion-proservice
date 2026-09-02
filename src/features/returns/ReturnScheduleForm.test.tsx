@@ -11,8 +11,8 @@ const options: ReturnScheduleOptions = {
     { id: 'location-b', client_id: 'client-b', name: 'Matriz B', city: 'São Paulo', state: 'SP' },
   ],
   equipment: [
-    { id: 'equipment-a', client_id: 'client-a', client_location_id: 'location-a', name: 'Esteira A', category: 'Cardio' },
-    { id: 'equipment-b', client_id: 'client-b', client_location_id: 'location-b', name: 'Bike B', category: 'Cardio' },
+    { id: 'equipment-a', name: 'Esteira A', category: 'Cardio' },
+    { id: 'equipment-b', name: 'Bike B', category: 'Cardio' },
   ],
   cities: ['Curitiba', 'São Paulo'],
 }
@@ -22,41 +22,33 @@ describe('ReturnScheduleForm', () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
     render(<ReturnScheduleForm options={options} onSubmit={onSubmit} />)
-
     await user.click(screen.getByRole('button', { name: /Revisar agendamento/ }))
-
     expect(screen.getByText('Selecione o cliente.')).toBeInTheDocument()
     expect(screen.getByText('Selecione um equipamento ativo.')).toBeInTheDocument()
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
-  it('mantém unidade e cliente sincronizados com o equipamento', async () => {
+  it('mantém o catálogo de equipamentos independente e filtra unidades pelo cliente', async () => {
     const user = userEvent.setup()
     render(<ReturnScheduleForm options={options} onSubmit={vi.fn()} />)
-
+    expect(screen.getByRole('option', { name: /Bike B/ })).toBeInTheDocument()
     await user.selectOptions(screen.getByLabelText(/Cliente/), 'client-a')
-    expect(screen.queryByRole('option', { name: /Bike B/ })).not.toBeInTheDocument()
-    await user.selectOptions(screen.getByLabelText(/Equipamento/), 'equipment-a')
-
-    expect(screen.getByText(/Matriz A · Curitiba\/PR/)).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /Matriz A/ })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: /Matriz B/ })).not.toBeInTheDocument()
   })
 
   it('revisa e confirma um retorno válido', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn().mockResolvedValue(undefined)
     render(<ReturnScheduleForm options={options} onSubmit={onSubmit} />)
-
     await user.selectOptions(screen.getByLabelText(/Cliente/), 'client-a')
-    await user.selectOptions(screen.getByLabelText(/Equipamento/), 'equipment-a')
+    await user.selectOptions(screen.getByLabelText(/Unidade visitada/), 'location-a')
+    await user.selectOptions(screen.getByLabelText(/Equipamento/), 'equipment-b')
     await user.type(screen.getByLabelText(/Orientações/), 'Revisar correia')
     await user.click(screen.getByRole('button', { name: /Revisar agendamento/ }))
     await user.click(screen.getByRole('button', { name: 'Confirmar retorno' }))
-
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
-      client_id: 'client-a',
-      client_location_id: 'location-a',
-      equipment_id: 'equipment-a',
-      notes: 'Revisar correia',
+      client_id: 'client-a', client_location_id: 'location-a', equipment_id: 'equipment-b', notes: 'Revisar correia',
     }))
   })
 })

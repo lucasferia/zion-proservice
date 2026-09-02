@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { PageSkeleton, PageState } from '../../components/PageState'
 import { useAuth } from '../auth/auth-context'
+import { datePlusDays } from '../returns/formatters'
 import { defaultScheduledAt } from './formatters'
 import {
   createMaintenance,
@@ -34,12 +35,13 @@ function createInitialInput(
 ): MaintenanceInput {
   const equipment = options.equipment.find((item) => item.id === preselectedEquipmentId)
   return {
-    client_id: equipment?.client_id ?? '',
-    client_location_id: equipment?.client_location_id ?? '',
+    client_id: '',
+    client_location_id: '',
     equipment_id: equipment?.id ?? '',
     maintenance_type: 'preventive',
     status: 'draft',
     scheduled_at: defaultScheduledAt(),
+    next_return_date: datePlusDays(30),
     diagnosis: '',
     service_performed: '',
     notes: '',
@@ -126,7 +128,7 @@ export function EditMaintenancePage() {
       : [{ id: details.client_id, name: `${details.client_name} (arquivado)` }, ...options.clients],
     equipment: options.equipment.some((item) => item.id === details.equipment_id)
       ? options.equipment
-      : [{ id: details.equipment_id, client_id: details.client_id, client_location_id: details.client_location_id, name: `${details.equipment_name} (arquivado)`, category: 'Histórico', status: 'inactive' }, ...options.equipment],
+      : [{ id: details.equipment_id, name: `${details.equipment_name} (arquivado)`, category: 'Histórico', status: 'inactive' }, ...options.equipment],
   }
 
   return (

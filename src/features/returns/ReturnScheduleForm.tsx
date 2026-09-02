@@ -19,12 +19,11 @@ export function ReturnScheduleForm({ options, onSubmit }: Props) {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isConfirming, setIsConfirming] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const equipmentOptions = useMemo(
-    () => options.equipment.filter((item) => !input.client_id || item.client_id === input.client_id),
-    [input.client_id, options.equipment],
+  const locationOptions = useMemo(
+    () => options.locations.filter((item) => item.client_id === input.client_id),
+    [input.client_id, options.locations],
   )
   const selectedEquipment = options.equipment.find((item) => item.id === input.equipment_id)
-  const selectedLocation = options.locations.find((item) => item.id === input.client_location_id)
 
   function updateField<Key extends keyof ReturnScheduleInput>(field: Key, value: ReturnScheduleInput[Key]) {
     setInput((current) => ({ ...current, [field]: value }))
@@ -34,20 +33,14 @@ export function ReturnScheduleForm({ options, onSubmit }: Props) {
   }
 
   function selectClient(clientId: string) {
-    setInput((current) => ({ ...current, client_id: clientId, equipment_id: '', client_location_id: '' }))
+    setInput((current) => ({ ...current, client_id: clientId, client_location_id: '' }))
     setErrors({})
     setIsConfirming(false)
   }
 
   function selectEquipment(equipmentId: string) {
-    const equipment = options.equipment.find((item) => item.id === equipmentId)
-    setInput((current) => ({
-      ...current,
-      equipment_id: equipmentId,
-      client_id: equipment?.client_id ?? current.client_id,
-      client_location_id: equipment?.client_location_id ?? '',
-    }))
-    setErrors((current) => ({ ...current, client_id: undefined, equipment_id: undefined, client_location_id: undefined }))
+    setInput((current) => ({ ...current, equipment_id: equipmentId }))
+    setErrors((current) => ({ ...current, equipment_id: undefined }))
     setIsConfirming(false)
   }
 
@@ -78,7 +71,7 @@ export function ReturnScheduleForm({ options, onSubmit }: Props) {
     <form className="record-form return-form" onSubmit={handleReview} noValidate>
       <div className="return-form__intro">
         <span className="return-form__step">01</span>
-        <div><span className="eyebrow">Destino técnico</span><h2>Onde será o retorno?</h2><p>O equipamento define o cliente e a unidade. Essa coerência também é validada pelo banco.</p></div>
+        <div><span className="eyebrow">Destino técnico</span><h2>Onde será o retorno?</h2><p>Escolha cliente, unidade visitada e um equipamento do catálogo geral.</p></div>
       </div>
 
       <div className="form-grid return-form__grid">
@@ -92,15 +85,18 @@ export function ReturnScheduleForm({ options, onSubmit }: Props) {
         </div>
         <div className="field">
           <label htmlFor="return-equipment">Equipamento <span aria-hidden="true">*</span></label>
-          <select id="return-equipment" value={input.equipment_id} disabled={!input.client_id} onChange={(event) => selectEquipment(event.target.value)} aria-invalid={Boolean(errors.equipment_id)}>
-            <option value="">{input.client_id ? 'Selecione' : 'Selecione o cliente primeiro'}</option>
-            {equipmentOptions.map((equipment) => <option value={equipment.id} key={equipment.id}>{equipment.name} · {equipment.category}</option>)}
+          <select id="return-equipment" value={input.equipment_id} onChange={(event) => selectEquipment(event.target.value)} aria-invalid={Boolean(errors.equipment_id)}>
+            <option value="">Selecione</option>
+            {options.equipment.map((equipment) => <option value={equipment.id} key={equipment.id}>{equipment.name} · {equipment.category}</option>)}
           </select>
           {errors.equipment_id && <span className="field-error">{errors.equipment_id}</span>}
         </div>
-        <div className="field return-location-readonly">
-          <span>Unidade vinculada</span>
-          <strong>{selectedEquipment ? selectedLocation ? `${selectedLocation.name} · ${selectedLocation.city}/${selectedLocation.state}` : 'Sem unidade específica' : 'Aguardando equipamento'}</strong>
+        <div className="field">
+          <label htmlFor="return-location">Unidade visitada</label>
+          <select id="return-location" value={input.client_location_id} disabled={!input.client_id} onChange={(event) => updateField('client_location_id', event.target.value)} aria-invalid={Boolean(errors.client_location_id)}>
+            <option value="">Sem unidade específica</option>
+            {locationOptions.map((location) => <option value={location.id} key={location.id}>{location.name} · {location.city}/{location.state}</option>)}
+          </select>
           {errors.client_location_id && <span className="field-error">{errors.client_location_id}</span>}
         </div>
         <div className="field">

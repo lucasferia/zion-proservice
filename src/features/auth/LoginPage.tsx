@@ -78,7 +78,7 @@ export function LoginPage() {
 
           <form className="login-form" onSubmit={handleSubmit} noValidate={false}>
             <div className="field">
-              <label htmlFor="email">E-mail</label>
+              <label htmlFor="email">Usuário ou e-mail</label>
               <input
                 id="email"
                 name="email"

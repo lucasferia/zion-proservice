@@ -12,6 +12,7 @@ const record: MaintenancePrintRecord = {
     maintenance_type: 'corrective',
     status: 'completed',
     scheduled_at: '2026-08-31T13:00:00Z',
+    next_return_date: '2026-09-30',
     total_amount: 500,
     client_id: 'client-1',
     client_name: 'Academia Horizonte',
