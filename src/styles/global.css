@@ -981,19 +981,25 @@ textarea:focus-visible,
 }
 
 .client-avatar {
-  display: grid;
-  width: 43px;
-  min-width: 43px;
-  height: 43px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
   color: #a8d8ff;
   background:
     linear-gradient(145deg, rgb(0 120 212 / 25%), rgb(0 120 212 / 7%));
   border: 1px solid rgb(0 120 212 / 42%);
-  border-radius: 11px;
+  border-radius: 12px;
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 1rem;
-  font-weight: 700;
-  place-items: center;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-align: center;
+  flex-shrink: 0;
+  user-select: none;
 }
 
 .client-avatar--large {
@@ -1001,11 +1007,13 @@ textarea:focus-visible,
   min-width: 70px;
   height: 70px;
   border-radius: 17px;
-  font-size: 1.6rem;
+  font-size: 1.85rem;
 }
 
 .client-row strong,
-.client-row span {
+.client-row__identity > div > span,
+.client-row__contact span,
+.client-row__locations span {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1017,7 +1025,7 @@ textarea:focus-visible,
   font-size: 0.82rem;
 }
 
-.client-row__identity span,
+.client-row__identity > div > span,
 .client-row__contact span,
 .client-row__locations span {
   margin-top: 5px;
@@ -1033,17 +1041,29 @@ textarea:focus-visible,
 }
 
 .client-row__arrow {
-  display: grid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 32px;
   height: 32px;
   color: #738297;
   border: 1px solid #334052;
   border-radius: 8px;
-  place-items: center;
+  justify-self: center;
+  align-self: center;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.client-row:hover .client-row__arrow {
+  color: #e5ebf3;
+  border-color: rgb(0 120 212 / 50%);
+  background: rgb(0 120 212 / 12%);
 }
 
 .client-row__arrow svg {
+  display: block;
   width: 16px;
+  height: 16px;
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;

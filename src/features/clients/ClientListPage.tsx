@@ -116,11 +116,6 @@ export function ClientListPage() {
               </div>
               <div className="client-row__locations">
                 <strong>{client.location_count}</strong>
-                <span>
-                  {client.cities.length
-                    ? client.cities.slice(0, 2).join(' · ')
-                    : client.location_count === 1 ? 'unidade' : 'unidades'}
-                </span>
               </div>
               <span className="client-row__arrow"><ArrowIcon /></span>
             </Link>
