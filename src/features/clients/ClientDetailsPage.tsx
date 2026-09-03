@@ -4,9 +4,9 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { PageSkeleton, PageState } from '../../components/PageState'
 import { RelevantReturns } from '../returns/RelevantReturns'
 import {
-  archiveClient,
-  archiveClientLocation,
   createClientLocation,
+  deleteClient,
+  deleteClientLocation,
   locationToInput,
   updateClientLocation,
 } from './clientApi'
@@ -79,35 +79,35 @@ export function ClientDetailsPage() {
     await refreshClient()
   }
 
-  async function handleArchiveClient() {
+  async function handleDeleteClient() {
     setIsArchiving(true)
     setActionError(null)
     try {
-      await archiveClient(organizationId, details.id)
+      await deleteClient(organizationId, details.id)
       await queryClient.invalidateQueries({ queryKey: clientKeys.lists() })
       navigate('/app/clientes', {
         replace: true,
-        state: { success: 'Cliente arquivado com sucesso.' },
+        state: { success: 'Cliente excluído com sucesso.' },
       })
-    } catch (archiveError) {
+    } catch (error) {
       setActionError(
-        archiveError instanceof Error ? archiveError.message : 'Não foi possível arquivar o cliente.',
+        error instanceof Error ? error.message : 'Não foi possível excluir o cliente.',
       )
       setIsArchiving(false)
     }
   }
 
-  async function handleArchiveLocation(locationId: string) {
+  async function handleDeleteLocation(locationId: string) {
     setIsArchiving(true)
     setActionError(null)
     try {
-      await archiveClientLocation(organizationId, locationId)
+      await deleteClientLocation(organizationId, locationId)
       setArchiveLocationPending(null)
-      setSuccess('Unidade arquivada com sucesso.')
+      setSuccess('Unidade excluída com sucesso.')
       await refreshClient()
-    } catch (archiveError) {
+    } catch (error) {
       setActionError(
-        archiveError instanceof Error ? archiveError.message : 'Não foi possível arquivar a unidade.',
+        error instanceof Error ? error.message : 'Não foi possível excluir a unidade.',
       )
     } finally {
       setIsArchiving(false)
@@ -137,13 +137,13 @@ export function ClientDetailsPage() {
           </Link>
           {!archiveClientPending ? (
             <button className="danger-text-button" type="button" onClick={() => setArchiveClientPending(true)}>
-              Arquivar cliente
+              Excluir cliente
             </button>
           ) : (
             <div className="archive-confirm" role="alert">
-              <span>Confirmar arquivamento?</span>
-              <button type="button" onClick={() => void handleArchiveClient()} disabled={isArchiving}>
-                {isArchiving ? 'Arquivando…' : 'Sim, arquivar'}
+              <span>Excluir cliente e todo histórico vinculado?</span>
+              <button type="button" onClick={() => void handleDeleteClient()} disabled={isArchiving}>
+                {isArchiving ? 'Excluindo…' : 'Sim, excluir definitivamente'}
               </button>
               <button type="button" onClick={() => setArchiveClientPending(false)} disabled={isArchiving}>
                 Cancelar
@@ -227,13 +227,13 @@ export function ClientDetailsPage() {
                     {!isPending ? (
                       <>
                         <button type="button" onClick={() => setEditor({ mode: 'edit', location })}>Editar</button>
-                        <button type="button" onClick={() => setArchiveLocationPending(location.id)}>Arquivar</button>
+                        <button type="button" onClick={() => setArchiveLocationPending(location.id)}>Excluir</button>
                       </>
                     ) : (
                       <div className="archive-confirm archive-confirm--location" role="alert">
-                        <span>Arquivar unidade?</span>
-                        <button type="button" onClick={() => void handleArchiveLocation(location.id)} disabled={isArchiving}>
-                          Confirmar
+                        <span>Excluir unidade definitivamente?</span>
+                        <button type="button" onClick={() => void handleDeleteLocation(location.id)} disabled={isArchiving}>
+                          {isArchiving ? 'Excluindo…' : 'Sim, excluir'}
                         </button>
                         <button type="button" onClick={() => setArchiveLocationPending(null)} disabled={isArchiving}>
                           Cancelar

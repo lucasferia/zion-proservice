@@ -165,18 +165,18 @@ export async function updateEquipment(
   if (error) throw new Error(friendlyDataError(error))
 }
 
-export async function archiveEquipment(organizationId: string, equipmentId: string) {
+export async function deleteEquipment(organizationId: string, equipmentId: string) {
   const supabase = requireClient()
-  const { error } = await supabase
-    .from('equipment')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('organization_id', organizationId)
-    .eq('id', equipmentId)
-    .is('deleted_at', null)
-    .select('id')
-    .single()
+  const { error } = await supabase.rpc('delete_equipment', {
+    target_organization_id: organizationId,
+    target_equipment_id: equipmentId,
+  })
 
   if (error) throw new Error(friendlyDataError(error))
+}
+
+export async function archiveEquipment(organizationId: string, equipmentId: string) {
+  return deleteEquipment(organizationId, equipmentId)
 }
 
 export function equipmentToInput(equipment: EquipmentDetails): EquipmentInput {

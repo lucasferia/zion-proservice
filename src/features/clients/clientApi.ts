@@ -158,18 +158,18 @@ export async function updateClient(
   if (error) throw new Error(friendlyDataError(error))
 }
 
-export async function archiveClient(organizationId: string, clientId: string) {
+export async function deleteClient(organizationId: string, clientId: string) {
   const supabase = requireClient()
-  const { error } = await supabase
-    .from('clients')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('organization_id', organizationId)
-    .eq('id', clientId)
-    .is('deleted_at', null)
-    .select('id')
-    .single()
+  const { error } = await supabase.rpc('delete_client', {
+    target_organization_id: organizationId,
+    target_client_id: clientId,
+  })
 
   if (error) throw new Error(friendlyDataError(error))
+}
+
+export async function archiveClient(organizationId: string, clientId: string) {
+  return deleteClient(organizationId, clientId)
 }
 
 export async function createClientLocation(
@@ -210,18 +210,18 @@ export async function updateClientLocation(
   if (error) throw new Error(friendlyDataError(error))
 }
 
-export async function archiveClientLocation(organizationId: string, locationId: string) {
+export async function deleteClientLocation(organizationId: string, locationId: string) {
   const supabase = requireClient()
-  const { error } = await supabase
-    .from('client_locations')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('organization_id', organizationId)
-    .eq('id', locationId)
-    .is('deleted_at', null)
-    .select('id')
-    .single()
+  const { error } = await supabase.rpc('delete_client_location', {
+    target_organization_id: organizationId,
+    target_location_id: locationId,
+  })
 
   if (error) throw new Error(friendlyDataError(error))
+}
+
+export async function archiveClientLocation(organizationId: string, locationId: string) {
+  return deleteClientLocation(organizationId, locationId)
 }
 
 export function locationToInput(location: ClientLocation): ClientLocationInput {

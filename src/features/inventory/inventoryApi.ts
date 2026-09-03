@@ -172,18 +172,18 @@ export async function updateInventoryItem(
   if (error) throw new Error(friendlyInventoryError(error))
 }
 
-export async function archiveInventoryItem(organizationId: string, itemId: string) {
+export async function deleteInventoryItem(organizationId: string, itemId: string) {
   const supabase = requireClient()
-  const { error } = await supabase
-    .from('inventory_items')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('organization_id', organizationId)
-    .eq('id', itemId)
-    .is('deleted_at', null)
-    .select('id')
-    .single()
+  const { error } = await supabase.rpc('delete_inventory_item', {
+    target_organization_id: organizationId,
+    target_item_id: itemId,
+  })
 
   if (error) throw new Error(friendlyInventoryError(error))
+}
+
+export async function archiveInventoryItem(organizationId: string, itemId: string) {
+  return deleteInventoryItem(organizationId, itemId)
 }
 
 export async function recordInventoryMovement(

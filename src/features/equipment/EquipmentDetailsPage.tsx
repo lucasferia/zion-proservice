@@ -7,7 +7,7 @@ import { useEquipmentMaintenanceHistory } from '../maintenances/maintenanceQueri
 import { MaintenanceStatusBadge } from '../maintenances/MaintenanceStatusBadge'
 import { getMaintenanceTypeLabel } from '../maintenances/types'
 import { RelevantReturns } from '../returns/RelevantReturns'
-import { archiveEquipment } from './equipmentApi'
+import { deleteEquipment } from './equipmentApi'
 import { EquipmentStatusBadge } from './EquipmentStatusBadge'
 import { equipmentKeys, useEquipmentDetails } from './equipmentQueries'
 
@@ -18,22 +18,21 @@ export function EquipmentDetailsPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const location = useLocation()
-  const success = (location.state as { success?: string } | null)?.success
   const [archivePending, setArchivePending] = useState(false)
-  const [isArchiving, setIsArchiving] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [isArchiving, setIsArchiving] = useState(false)
+  const success = (location.state as { success?: string } | null)?.success ?? null
 
-  const isLoading = organization.isLoading || (organization.isSuccess && equipment.isLoading)
+  if (organization.isLoading || equipment.isLoading) return <PageSkeleton rows={5} />
+
   const error = organization.error ?? equipment.error
-
-  if (isLoading) return <PageSkeleton rows={5} />
-  if (error || !equipment.data) {
+  if (error || !organization.data || !equipment.data) {
     return (
       <PageState
         title="Equipamento indisponível"
-        description={error?.message ?? 'O equipamento não foi encontrado ou está arquivado.'}
-        actionLabel="Tentar novamente"
-        onAction={() => void (organization.isError ? organization.refetch() : equipment.refetch())}
+        description={error instanceof Error ? error.message : 'O equipamento não foi encontrado.'}
+        actionLabel="Voltar para equipamentos"
+        onAction={() => navigate('/app/equipamentos')}
         tone="error"
       />
     )
@@ -41,19 +40,19 @@ export function EquipmentDetailsPage() {
 
   const details = equipment.data
 
-  async function handleArchive() {
+  async function handleDelete() {
     setIsArchiving(true)
     setActionError(null)
     try {
-      await archiveEquipment(organization.data!, details.id)
+      await deleteEquipment(organization.data!, details.id)
       await queryClient.invalidateQueries({ queryKey: equipmentKeys.all })
       navigate('/app/equipamentos', {
         replace: true,
-        state: { success: 'Equipamento arquivado com sucesso.' },
+        state: { success: 'Equipamento excluído com sucesso.' },
       })
-    } catch (archiveError) {
+    } catch (error) {
       setActionError(
-        archiveError instanceof Error ? archiveError.message : 'Não foi possível arquivar o equipamento.',
+        error instanceof Error ? error.message : 'Não foi possível excluir o equipamento.',
       )
       setArchivePending(false)
       setIsArchiving(false)
@@ -79,13 +78,13 @@ export function EquipmentDetailsPage() {
           </Link>
           {!archivePending ? (
             <button className="danger-text-button" type="button" onClick={() => setArchivePending(true)}>
-              Arquivar equipamento
+              Excluir equipamento
             </button>
           ) : (
             <div className="archive-confirm" role="alert">
-              <span>Confirmar arquivamento?</span>
-              <button type="button" onClick={() => void handleArchive()} disabled={isArchiving}>
-                {isArchiving ? 'Arquivando…' : 'Sim, arquivar'}
+              <span>Excluir equipamento e histórico vinculado?</span>
+              <button type="button" onClick={() => void handleDelete()} disabled={isArchiving}>
+                {isArchiving ? 'Excluindo…' : 'Sim, excluir definitivamente'}
               </button>
               <button type="button" onClick={() => setArchivePending(false)} disabled={isArchiving}>
                 Cancelar

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { PageSkeleton, PageState } from '../../components/PageState'
-import { archiveInventoryItem } from './inventoryApi'
+import { deleteInventoryItem } from './inventoryApi'
 import {
   formatInventoryCurrency,
   formatInventoryQuantity,
@@ -27,20 +27,20 @@ export function InventoryDetailsPage() {
 
   if (isLoading) return <PageSkeleton rows={5} />
   if (error || !item.data) {
-    return <PageState title="Item indisponível" description={error?.message ?? 'O item não foi encontrado ou está arquivado.'} actionLabel="Tentar novamente" onAction={() => void (organization.isError ? organization.refetch() : item.refetch())} tone="error" />
+    return <PageState title="Item indisponível" description={error?.message ?? 'O item não foi encontrado.'} actionLabel="Tentar novamente" onAction={() => void (organization.isError ? organization.refetch() : item.refetch())} tone="error" />
   }
 
   const details = item.data
 
-  async function handleArchive() {
+  async function handleDelete() {
     setIsArchiving(true)
     setActionError(null)
     try {
-      await archiveInventoryItem(organization.data!, details.id)
+      await deleteInventoryItem(organization.data!, details.id)
       await queryClient.invalidateQueries({ queryKey: inventoryKeys.all })
-      navigate('/app/estoque', { replace: true, state: { success: 'Item arquivado com sucesso.' } })
-    } catch (archiveError) {
-      setActionError(archiveError instanceof Error ? archiveError.message : 'Não foi possível arquivar o item.')
+      navigate('/app/estoque', { replace: true, state: { success: 'Item excluído com sucesso.' } })
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Não foi possível excluir o item.')
       setArchivePending(false)
       setIsArchiving(false)
     }
@@ -62,11 +62,11 @@ export function InventoryDetailsPage() {
           <Link className="primary-button primary-button--link primary-button--compact" to={`/app/estoque/${details.id}/movimentar`}>Movimentar <span aria-hidden="true">±</span></Link>
           <Link className="secondary-button secondary-button--link" to={`/app/estoque/${details.id}/editar`}>Editar item</Link>
           {!archivePending ? (
-            <button className="danger-text-button" type="button" onClick={() => setArchivePending(true)}>Arquivar item</button>
+            <button className="danger-text-button" type="button" onClick={() => setArchivePending(true)}>Excluir item</button>
           ) : (
             <div className="archive-confirm" role="alert">
-              <span>Confirmar arquivamento?</span>
-              <button type="button" onClick={() => void handleArchive()} disabled={isArchiving}>{isArchiving ? 'Arquivando…' : 'Sim, arquivar'}</button>
+              <span>Excluir item e movimentações vinculadas?</span>
+              <button type="button" onClick={() => void handleDelete()} disabled={isArchiving}>{isArchiving ? 'Excluindo…' : 'Sim, excluir definitivamente'}</button>
               <button type="button" onClick={() => setArchivePending(false)} disabled={isArchiving}>Cancelar</button>
             </div>
           )}
