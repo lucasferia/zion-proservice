@@ -51,6 +51,15 @@ function InventoryIcon() {
   )
 }
 
+function SupplierIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+      <path d="M4 8h11v9H4zM15 11h3l2 3v3h-5z" />
+      <circle cx="8" cy="18" r="2" /><circle cx="17" cy="18" r="2" />
+    </svg>
+  )
+}
+
 function MaintenanceIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
@@ -119,6 +128,10 @@ export function AppShell() {
           <NavLink className={navItemClass} to="/app/estoque">
             <InventoryIcon />
             <span>Estoque</span>
+          </NavLink>
+          <NavLink className={navItemClass} to="/app/fornecedores">
+            <SupplierIcon />
+            <span>Fornecedores</span>
           </NavLink>
           <NavLink className={navItemClass} to="/app/financeiro">
             <FinancialIcon />

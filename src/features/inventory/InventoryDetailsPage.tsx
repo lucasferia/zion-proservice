@@ -38,9 +38,9 @@ export function InventoryDetailsPage() {
     try {
       await deleteInventoryItem(organization.data!, details.id)
       await queryClient.invalidateQueries({ queryKey: inventoryKeys.all })
-      navigate('/app/estoque', { replace: true, state: { success: 'Item excluído com sucesso.' } })
+      navigate('/app/estoque', { replace: true, state: { success: 'Item arquivado com sucesso.' } })
     } catch (error) {
-      setActionError(error instanceof Error ? error.message : 'Não foi possível excluir o item.')
+      setActionError(error instanceof Error ? error.message : 'Não foi possível arquivar o item.')
       setArchivePending(false)
       setIsArchiving(false)
     }
@@ -62,11 +62,11 @@ export function InventoryDetailsPage() {
           <Link className="primary-button primary-button--link primary-button--compact" to={`/app/estoque/${details.id}/movimentar`}>Movimentar <span aria-hidden="true">±</span></Link>
           <Link className="secondary-button secondary-button--link" to={`/app/estoque/${details.id}/editar`}>Editar item</Link>
           {!archivePending ? (
-            <button className="danger-text-button" type="button" onClick={() => setArchivePending(true)}>Excluir item</button>
+            <button className="danger-text-button" type="button" onClick={() => setArchivePending(true)}>Arquivar item</button>
           ) : (
             <div className="archive-confirm" role="alert">
-              <span>Excluir item e movimentações vinculadas?</span>
-              <button type="button" onClick={() => void handleDelete()} disabled={isArchiving}>{isArchiving ? 'Excluindo…' : 'Sim, excluir definitivamente'}</button>
+              <span>Arquivar item? As movimentações serão preservadas.</span>
+              <button type="button" onClick={() => void handleDelete()} disabled={isArchiving}>{isArchiving ? 'Arquivando…' : 'Sim, arquivar'}</button>
               <button type="button" onClick={() => setArchivePending(false)} disabled={isArchiving}>Cancelar</button>
             </div>
           )}
@@ -93,6 +93,7 @@ export function InventoryDetailsPage() {
             <div><dt>Categoria</dt><dd>{details.category || 'Não informada'}</dd></div>
             <div><dt>Custo médio</dt><dd>{formatInventoryCurrency(details.average_unit_cost)}</dd></div>
             <div><dt>Status</dt><dd>{getInventoryItemStatusLabel(details.status)}</dd></div>
+            <div><dt>Fornecedor</dt><dd>{details.supplier?.name || 'Não vinculado'}</dd></div>
           </dl>
         </article>
         <article className="info-card info-card--notes inventory-notes-card">

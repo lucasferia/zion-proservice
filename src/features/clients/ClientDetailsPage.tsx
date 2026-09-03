@@ -87,11 +87,11 @@ export function ClientDetailsPage() {
       await queryClient.invalidateQueries({ queryKey: clientKeys.lists() })
       navigate('/app/clientes', {
         replace: true,
-        state: { success: 'Cliente excluído com sucesso.' },
+        state: { success: 'Cliente arquivado com sucesso.' },
       })
     } catch (error) {
       setActionError(
-        error instanceof Error ? error.message : 'Não foi possível excluir o cliente.',
+        error instanceof Error ? error.message : 'Não foi possível arquivar o cliente.',
       )
       setIsArchiving(false)
     }
@@ -103,11 +103,11 @@ export function ClientDetailsPage() {
     try {
       await deleteClientLocation(organizationId, locationId)
       setArchiveLocationPending(null)
-      setSuccess('Unidade excluída com sucesso.')
+      setSuccess('Unidade arquivada com sucesso.')
       await refreshClient()
     } catch (error) {
       setActionError(
-        error instanceof Error ? error.message : 'Não foi possível excluir a unidade.',
+        error instanceof Error ? error.message : 'Não foi possível arquivar a unidade.',
       )
     } finally {
       setIsArchiving(false)
@@ -137,13 +137,13 @@ export function ClientDetailsPage() {
           </Link>
           {!archiveClientPending ? (
             <button className="danger-text-button" type="button" onClick={() => setArchiveClientPending(true)}>
-              Excluir cliente
+              Arquivar cliente
             </button>
           ) : (
             <div className="archive-confirm" role="alert">
-              <span>Excluir cliente e todo histórico vinculado?</span>
+              <span>Arquivar cliente? Todo o histórico será preservado.</span>
               <button type="button" onClick={() => void handleDeleteClient()} disabled={isArchiving}>
-                {isArchiving ? 'Excluindo…' : 'Sim, excluir definitivamente'}
+                {isArchiving ? 'Arquivando…' : 'Sim, arquivar'}
               </button>
               <button type="button" onClick={() => setArchiveClientPending(false)} disabled={isArchiving}>
                 Cancelar
@@ -227,13 +227,13 @@ export function ClientDetailsPage() {
                     {!isPending ? (
                       <>
                         <button type="button" onClick={() => setEditor({ mode: 'edit', location })}>Editar</button>
-                        <button type="button" onClick={() => setArchiveLocationPending(location.id)}>Excluir</button>
+                        <button type="button" onClick={() => setArchiveLocationPending(location.id)}>Arquivar</button>
                       </>
                     ) : (
                       <div className="archive-confirm archive-confirm--location" role="alert">
-                        <span>Excluir unidade definitivamente?</span>
+                        <span>Arquivar esta unidade?</span>
                         <button type="button" onClick={() => void handleDeleteLocation(location.id)} disabled={isArchiving}>
-                          {isArchiving ? 'Excluindo…' : 'Sim, excluir'}
+                          {isArchiving ? 'Arquivando…' : 'Sim, arquivar'}
                         </button>
                         <button type="button" onClick={() => setArchiveLocationPending(null)} disabled={isArchiving}>
                           Cancelar

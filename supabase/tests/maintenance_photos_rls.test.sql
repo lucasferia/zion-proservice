@@ -37,8 +37,8 @@ values
 
 select ok(exists(select 1 from storage.buckets where id = 'maintenance-photos'), 'bucket exclusivo foi criado');
 select is((select public from storage.buckets where id = 'maintenance-photos'), false, 'bucket é privado');
-select is((select file_size_limit from storage.buckets where id = 'maintenance-photos'), 10485760::bigint, 'bucket limita cada arquivo a 10 MB');
-select is((select allowed_mime_types from storage.buckets where id = 'maintenance-photos'), array['image/jpeg', 'image/png', 'image/webp']::text[], 'bucket aceita somente JPEG, PNG e WebP');
+select is((select file_size_limit from storage.buckets where id = 'maintenance-photos'), 1048576::bigint, 'bucket limita cada arquivo processado a 1 MB');
+select is((select allowed_mime_types from storage.buckets where id = 'maintenance-photos'), array['image/webp']::text[], 'bucket recebe somente WebP processado');
 select is((select relrowsecurity from pg_class where oid = 'public.maintenance_photos'::regclass), true, 'RLS está habilitada em maintenance_photos');
 
 set local role authenticated;
@@ -48,9 +48,9 @@ select lives_ok(
   format(
     'insert into storage.objects (bucket_id, name, owner_id, metadata) values (%L, %L, %L, %L::jsonb)',
     'maintenance-photos',
-    current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/primeira.jpg',
+    current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/primeira.webp',
     '71000000-0000-4000-8000-000000000001',
-    '{"mimetype":"image/jpeg","size":1024}'
+    '{"mimetype":"image/webp","size":1024}'
   ),
   'owner envia objeto para manutenção aberta do próprio tenant'
 );
@@ -58,7 +58,7 @@ select lives_ok(
   format(
     'insert into public.maintenance_photos (organization_id, maintenance_id, kind, storage_path, mime_type, file_size, sort_order) values (%L, %L, %L, %L, %L, 1024, 0)',
     current_setting('test.photo_org_a'), '71500000-0000-4000-8000-000000000001', 'before',
-    current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/primeira.jpg', 'image/jpeg'
+    current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/primeira.webp', 'image/webp'
   ),
   'owner registra metadados da foto no próprio tenant'
 );
@@ -68,39 +68,39 @@ select throws_like(
     'insert into public.maintenance_photos (organization_id, maintenance_id, kind, storage_path, mime_type, file_size) values (%L, %L, %L, %L, %L, 100)',
     current_setting('test.photo_org_a'), '71500000-0000-4000-8000-000000000001', 'before',
     current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/invalida.gif', 'image/gif'
-  ), '%maintenance_photos_mime_type_check%', 'tabela rejeita MIME não permitido'
+  ), '%WebP otimizado de até 1 MB%', 'tabela rejeita novo MIME diferente de WebP'
 );
 select throws_like(
   format(
-    'insert into public.maintenance_photos (organization_id, maintenance_id, kind, storage_path, mime_type, file_size) values (%L, %L, %L, %L, %L, 10485761)',
+    'insert into public.maintenance_photos (organization_id, maintenance_id, kind, storage_path, mime_type, file_size) values (%L, %L, %L, %L, %L, 1048577)',
     current_setting('test.photo_org_a'), '71500000-0000-4000-8000-000000000001', 'before',
-    current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/grande.jpg', 'image/jpeg'
-  ), '%maintenance_photos_file_size_check%', 'tabela rejeita arquivo maior que 10 MB'
+    current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/grande.webp', 'image/webp'
+  ), '%WebP otimizado de até 1 MB%', 'tabela rejeita novo arquivo processado maior que 1 MB'
 );
 select throws_like(
   format(
     'insert into public.maintenance_photos (organization_id, maintenance_id, kind, storage_path, mime_type, file_size) values (%L, %L, %L, %L, %L, 100)',
     current_setting('test.photo_org_a'), '71500000-0000-4000-8000-000000000001', 'before',
-    current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/after/caminho.jpg', 'image/jpeg'
+    current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/after/caminho.webp', 'image/webp'
   ), '%maintenance_photos_path_check%', 'tabela exige kind idêntico no path e no metadado'
 );
 select throws_like(
   format(
     'insert into public.maintenance_photos (organization_id, maintenance_id, kind, storage_path, mime_type, file_size) values (%L, %L, %L, %L, %L, 100)',
     current_setting('test.photo_org_b'), '72500000-0000-4000-8000-000000000001', 'before',
-    current_setting('test.photo_org_b') || '/72500000-0000-4000-8000-000000000001/before/invasora.jpg', 'image/jpeg'
+    current_setting('test.photo_org_b') || '/72500000-0000-4000-8000-000000000001/before/invasora.webp', 'image/webp'
   ), '%row-level security%', 'RLS bloqueia metadado cross-tenant'
 );
 select throws_like(
   format(
     'insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)',
-    'maintenance-photos', current_setting('test.photo_org_b') || '/72500000-0000-4000-8000-000000000001/before/invasora.jpg', '71000000-0000-4000-8000-000000000001'
+    'maintenance-photos', current_setting('test.photo_org_b') || '/72500000-0000-4000-8000-000000000001/before/invasora.webp', '71000000-0000-4000-8000-000000000001'
   ), '%row-level security%', 'Storage bloqueia upload cross-tenant mesmo com path manual'
 );
 select throws_like(
   format(
     'insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)',
-    'maintenance-photos', current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/pasta/extra.jpg', '71000000-0000-4000-8000-000000000001'
+    'maintenance-photos', current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/pasta/extra.webp', '71000000-0000-4000-8000-000000000001'
   ), '%row-level security%', 'Storage rejeita path com segmentos extras'
 );
 select is((select count(*) from storage.objects where bucket_id = 'maintenance-photos'), 1::bigint, 'owner lista somente objeto autorizado');
@@ -160,13 +160,13 @@ select set_config('request.jwt.claim.sub', '72000000-0000-4000-8000-000000000002
 select is((select count(*) from public.maintenance_photos), 0::bigint, 'outro tenant não lista metadados da organização A');
 select is((select count(*) from storage.objects where bucket_id = 'maintenance-photos'), 0::bigint, 'outro tenant não lista objetos da organização A');
 select ok(
-  not public.can_access_maintenance_photo_object(current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/primeira.jpg', false),
+  not public.can_access_maintenance_photo_object(current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/primeira.webp', false),
   'helper de Storage nega acesso cross-tenant'
 );
 select throws_like(
   format(
     'delete from storage.objects where bucket_id = %L and name = %L',
-    'maintenance-photos', current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/primeira.jpg'
+    'maintenance-photos', current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/primeira.webp'
   ), '%Storage API%', 'delete SQL cross-tenant também é bloqueado pela proteção nativa do Storage'
 );
 
@@ -188,27 +188,27 @@ select throws_like(
   format(
     'insert into public.maintenance_photos (organization_id, maintenance_id, kind, storage_path, mime_type, file_size) values (%L, %L, %L, %L, %L, 100)',
     current_setting('test.photo_org_a'), '71500000-0000-4000-8000-000000000001', 'after',
-    current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/after/tardia.jpg', 'image/jpeg'
+    current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/after/tardia.webp', 'image/webp'
   ), '%somente leitura%', 'trigger bloqueia novo metadado após conclusão'
 );
 select throws_like(
   format(
     'insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)',
-    'maintenance-photos', current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/after/tardia.jpg', '71000000-0000-4000-8000-000000000001'
+    'maintenance-photos', current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/after/tardia.webp', '71000000-0000-4000-8000-000000000001'
   ), '%row-level security%', 'Storage bloqueia upload após conclusão'
 );
 
 select lives_ok(
   format(
     'insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)',
-    'maintenance-photos', current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000002/before/cancelada.png', '71000000-0000-4000-8000-000000000001'
+    'maintenance-photos', current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000002/before/cancelada.webp', '71000000-0000-4000-8000-000000000001'
   ), 'owner envia foto antes do cancelamento'
 );
 select lives_ok(
   format(
     'insert into public.maintenance_photos (organization_id, maintenance_id, kind, storage_path, mime_type, file_size) values (%L, %L, %L, %L, %L, 500)',
     current_setting('test.photo_org_a'), '71500000-0000-4000-8000-000000000002', 'before',
-    current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000002/before/cancelada.png', 'image/png'
+    current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000002/before/cancelada.webp', 'image/webp'
   ), 'owner registra foto antes do cancelamento'
 );
 select lives_ok(

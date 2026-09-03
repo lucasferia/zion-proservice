@@ -20,6 +20,7 @@ type UploadJob = {
   name: string
   previewUrl: string
   progress: number
+  stage: 'preparing' | 'uploading'
 }
 
 function formatFileSize(bytes: number) {
@@ -93,6 +94,10 @@ export function MaintenancePhotoSection({
     setJobs((current) => current.map((job) => job.id === jobId ? { ...job, progress } : job))
   }
 
+  function updateJobStage(jobId: string, stage: UploadJob['stage']) {
+    setJobs((current) => current.map((job) => job.id === jobId ? { ...job, stage } : job))
+  }
+
   async function handleFiles(kind: MaintenancePhotoKind, event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? [])
     event.target.value = ''
@@ -111,7 +116,7 @@ export function MaintenancePhotoSection({
     for (const [index, file] of validFiles.entries()) {
       const jobId = crypto.randomUUID()
       const previewUrl = URL.createObjectURL(file)
-      const job: UploadJob = { id: jobId, kind, name: file.name, previewUrl, progress: 0 }
+      const job: UploadJob = { id: jobId, kind, name: file.name, previewUrl, progress: 0, stage: 'preparing' }
       setJobs((current) => [...current, job])
       try {
         await uploadMaintenancePhoto(
@@ -121,6 +126,7 @@ export function MaintenancePhotoSection({
           file,
           grouped[kind].length + index,
           (progress) => updateJob(jobId, progress),
+          (stage) => updateJobStage(jobId, stage),
         )
         uploaded += 1
       } catch (error) {
@@ -209,17 +215,28 @@ export function MaintenancePhotoSection({
                   <span className="photo-evidence-board__index">{kind === 'before' ? '01' : '02'}</span>
                   <div><h3 id={`photo-kind-${kind}`}>{kindOption.label}</h3><p>{photos.length} {photos.length === 1 ? 'registro' : 'registros'}</p></div>
                   {open && (
-                    <label className="photo-upload-button">
-                      <span>Adicionar</span>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        capture="environment"
-                        multiple
-                        aria-label={`Adicionar fotos ${kindOption.label}`}
-                        onChange={(event) => void handleFiles(kind, event)}
-                      />
-                    </label>
+                    <div className="photo-upload-actions" aria-label={`Adicionar fotos ${kindOption.label}`}>
+                      <label className="photo-upload-button">
+                        <span>Galeria</span>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          multiple
+                          aria-label={`Escolher fotos ${kindOption.label} da galeria`}
+                          onChange={(event) => void handleFiles(kind, event)}
+                        />
+                      </label>
+                      <label className="photo-upload-button photo-upload-button--camera">
+                        <span>Câmera</span>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          capture="environment"
+                          aria-label={`Tirar foto ${kindOption.label} com a câmera`}
+                          onChange={(event) => void handleFiles(kind, event)}
+                        />
+                      </label>
+                    </div>
                   )}
                 </header>
 
@@ -227,7 +244,7 @@ export function MaintenancePhotoSection({
                   <div className="photo-empty-state">
                     <span aria-hidden="true">▧</span>
                     <strong>Nenhuma foto {kindOption.label.toLowerCase()}</strong>
-                    <p>{open ? 'JPEG, PNG ou WebP · até 10 MB por arquivo.' : 'Nenhum registro foi anexado nesta etapa.'}</p>
+                    <p>{open ? 'JPEG, PNG ou WebP · origem até 15 MB. Envio otimizado em WebP.' : 'Nenhum registro foi anexado nesta etapa.'}</p>
                   </div>
                 ) : (
                   <div className="photo-grid">
@@ -258,7 +275,10 @@ export function MaintenancePhotoSection({
                     {kindJobs.map((job) => (
                       <figure className="photo-card photo-card--uploading" key={job.id}>
                         <img src={job.previewUrl} alt="Prévia da foto em envio" />
-                        <figcaption><span>{job.name}</span><strong>{job.progress}%</strong></figcaption>
+                        <figcaption>
+                          <span>{job.stage === 'preparing' ? 'Preparando imagem' : 'Enviando imagem'} · {job.name}</span>
+                          <strong>{job.progress}%</strong>
+                        </figcaption>
                         <div className="photo-upload-progress"><span style={{ width: `${job.progress}%` }} /></div>
                       </figure>
                     ))}

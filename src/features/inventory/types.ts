@@ -47,6 +47,8 @@ export type InventoryMovement = {
 }
 
 export type InventoryItemDetails = InventoryItemSummary & {
+  supplier_id: string | null
+  supplier: InventorySupplierOption | null
   movements: InventoryMovement[]
 }
 
@@ -59,6 +61,7 @@ export type InventoryItemInput = {
   average_unit_cost: string
   status: InventoryItemStatus
   notes: string
+  supplier_id: string
 }
 
 export type InventoryFilters = {
@@ -69,6 +72,12 @@ export type InventoryFilters = {
 export type InventoryOptions = {
   categories: string[]
   units: string[]
+  suppliers: InventorySupplierOption[]
+}
+
+export type InventorySupplierOption = {
+  id: string
+  name: string
 }
 
 export type InventoryMovementInput = {

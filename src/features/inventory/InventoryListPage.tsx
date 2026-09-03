@@ -54,9 +54,10 @@ export function InventoryListPage() {
           <h1 id="inventory-title">Estoque</h1>
           <p>Acompanhe saldos, níveis mínimos e um histórico confiável de cada movimentação.</p>
         </div>
-        <Link className="primary-button primary-button--link" to="/app/estoque/novo">
-          Novo item <span aria-hidden="true">+</span>
-        </Link>
+        <div className="module-heading__actions">
+          <Link className="secondary-button secondary-button--link" to="/app/fornecedores">Fornecedores</Link>
+          <Link className="primary-button primary-button--link" to="/app/estoque/novo">Novo item <span aria-hidden="true">+</span></Link>
+        </div>
       </div>
 
       {success && <div className="alert alert--success" role="status">{success}</div>}

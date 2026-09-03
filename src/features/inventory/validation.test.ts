@@ -12,6 +12,7 @@ describe('inventory item validation', () => {
       average_unit_cost: '45.90',
       status: 'active',
       notes: '',
+      supplier_id: '',
     })).toEqual({})
   })
 
@@ -25,6 +26,7 @@ describe('inventory item validation', () => {
       average_unit_cost: '1.12345',
       status: 'active',
       notes: '',
+      supplier_id: '',
     })
     expect(errors.name).toBeDefined()
     expect(errors.unit_of_measure).toBeDefined()

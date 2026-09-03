@@ -12,6 +12,7 @@ const emptyItem: InventoryItemInput = {
   average_unit_cost: '0',
   status: 'active',
   notes: '',
+  supplier_id: '',
 }
 
 type InventoryItemFormProps = {
@@ -102,6 +103,14 @@ export function InventoryItemForm({
             {INVENTORY_ITEM_STATUSES.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
           </select>
           {errors.status && <span className="field-error">{errors.status}</span>}
+        </div>
+        <div className="field">
+          <label htmlFor="inventory-supplier">Fornecedor</label>
+          <select id="inventory-supplier" value={input.supplier_id} onChange={(event) => updateField('supplier_id', event.target.value)}>
+            <option value="">Sem fornecedor vinculado</option>
+            {options.suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}
+          </select>
+          <span className="field-help">Vínculo opcional para facilitar futuras reposições.</span>
         </div>
       </div>
 

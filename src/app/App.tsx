@@ -48,6 +48,18 @@ const EditInventoryItemPage = lazy(() =>
 const InventoryMovementPage = lazy(() =>
   import('../features/inventory/InventoryMovementPage').then((module) => ({ default: module.InventoryMovementPage })),
 )
+const SupplierListPage = lazy(() =>
+  import('../features/suppliers/SupplierListPage').then((module) => ({ default: module.SupplierListPage })),
+)
+const SupplierDetailsPage = lazy(() =>
+  import('../features/suppliers/SupplierDetailsPage').then((module) => ({ default: module.SupplierDetailsPage })),
+)
+const CreateSupplierPage = lazy(() =>
+  import('../features/suppliers/SupplierFormPage').then((module) => ({ default: module.CreateSupplierPage })),
+)
+const EditSupplierPage = lazy(() =>
+  import('../features/suppliers/SupplierFormPage').then((module) => ({ default: module.EditSupplierPage })),
+)
 const MaintenanceListPage = lazy(() =>
   import('../features/maintenances/MaintenanceListPage').then((module) => ({ default: module.MaintenanceListPage })),
 )
@@ -104,6 +116,10 @@ export function App() {
           <Route path="estoque/:itemId" element={<DeferredRoute><InventoryDetailsPage /></DeferredRoute>} />
           <Route path="estoque/:itemId/editar" element={<DeferredRoute><EditInventoryItemPage /></DeferredRoute>} />
           <Route path="estoque/:itemId/movimentar" element={<DeferredRoute><InventoryMovementPage /></DeferredRoute>} />
+          <Route path="fornecedores" element={<DeferredRoute><SupplierListPage /></DeferredRoute>} />
+          <Route path="fornecedores/novo" element={<DeferredRoute><CreateSupplierPage /></DeferredRoute>} />
+          <Route path="fornecedores/:supplierId" element={<DeferredRoute><SupplierDetailsPage /></DeferredRoute>} />
+          <Route path="fornecedores/:supplierId/editar" element={<DeferredRoute><EditSupplierPage /></DeferredRoute>} />
           <Route path="manutencoes" element={<DeferredRoute><MaintenanceListPage /></DeferredRoute>} />
           <Route path="manutencoes/nova" element={<DeferredRoute><CreateMaintenancePage /></DeferredRoute>} />
           <Route path="manutencoes/:maintenanceId/pagamentos/novo" element={<DeferredRoute><CreatePaymentPage /></DeferredRoute>} />

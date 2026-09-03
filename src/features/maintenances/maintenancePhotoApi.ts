@@ -6,6 +6,7 @@ import {
   type MaintenancePhoto,
   type MaintenancePhotoKind,
 } from './maintenancePhotoTypes'
+import { prepareMaintenancePhoto } from './maintenancePhotoProcessing'
 import { maintenancePhotoExtension, validateMaintenancePhoto } from './maintenancePhotoValidation'
 
 type PhotoRow = Omit<MaintenancePhoto, 'signed_url'>
@@ -20,7 +21,7 @@ export function friendlyMaintenancePhotoError(error: { code?: string; message?: 
   if (!error) return 'Não foi possível concluir a operação com a foto.'
   const message = error.message ?? ''
   if (message.includes('maximum allowed size') || message.includes('maximum')) {
-    return 'A foto deve ter no máximo 10 MB.'
+    return 'A imagem processada deve ter no máximo 1 MB.'
   }
   if (message.includes('mime type') || message.includes('MIME')) {
     return 'Use uma imagem JPEG, PNG ou WebP.'
@@ -72,18 +73,23 @@ export async function uploadMaintenancePhoto(
   file: File,
   sortOrder: number,
   onProgress?: (progress: number) => void,
+  onStage?: (stage: 'preparing' | 'uploading') => void,
 ) {
   const validationError = validateMaintenancePhoto(file)
   if (validationError) throw new Error(validationError)
 
+  onStage?.('preparing')
+  onProgress?.(5)
+  const preparedFile = await prepareMaintenancePhoto(file)
   const supabase = requireClient()
-  const extension = maintenancePhotoExtension(file.type)
+  const extension = maintenancePhotoExtension(preparedFile.type)
   const storagePath = `${organizationId}/${maintenanceId}/${kind}/${crypto.randomUUID()}.${extension}`
 
-  onProgress?.(10)
-  const upload = await supabase.storage.from(MAINTENANCE_PHOTO_BUCKET).upload(storagePath, file, {
+  onStage?.('uploading')
+  onProgress?.(35)
+  const upload = await supabase.storage.from(MAINTENANCE_PHOTO_BUCKET).upload(storagePath, preparedFile, {
     cacheControl: '300',
-    contentType: file.type,
+    contentType: 'image/webp',
     upsert: false,
   })
   if (upload.error) throw new Error(friendlyMaintenancePhotoError(upload.error))
@@ -94,8 +100,8 @@ export async function uploadMaintenancePhoto(
     maintenance_id: maintenanceId,
     kind,
     storage_path: storagePath,
-    mime_type: file.type,
-    file_size: file.size,
+    mime_type: 'image/webp',
+    file_size: preparedFile.size,
     sort_order: sortOrder,
   })
 

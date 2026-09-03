@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { InventoryItemForm } from './InventoryItemForm'
 
-const options = { categories: ['Transmissão'], units: ['unidade'] }
+const options = { categories: ['Transmissão'], units: ['unidade'], suppliers: [{ id: 'supplier-1', name: 'Peças Zion' }] }
 
 describe('InventoryItemForm', () => {
   it('mostra validações e não envia item inválido', async () => {
@@ -23,12 +23,14 @@ describe('InventoryItemForm', () => {
     await user.type(screen.getByLabelText(/Nome do item/), 'Correia RT 250')
     await user.type(screen.getByLabelText('SKU'), 'COR-250')
     await user.type(screen.getByLabelText(/Unidade de medida/), 'unidade')
+    await user.selectOptions(screen.getByLabelText('Fornecedor'), 'supplier-1')
     await user.click(screen.getByRole('button', { name: /Cadastrar item/ }))
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
       name: 'Correia RT 250',
       sku: 'COR-250',
       unit_of_measure: 'unidade',
       minimum_stock: '0',
+      supplier_id: 'supplier-1',
     }))
     expect(screen.queryByLabelText(/saldo atual/i)).not.toBeInTheDocument()
   })

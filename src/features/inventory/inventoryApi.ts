@@ -32,6 +32,7 @@ function normalizeItem(input: InventoryItemInput) {
     average_unit_cost: decimalValue(input.average_unit_cost),
     status: input.status,
     notes: optional(input.notes),
+    supplier_id: input.supplier_id || null,
   }
 }
 
@@ -42,6 +43,7 @@ export function friendlyInventoryError(error: { code?: string; message?: string 
   if (message.includes('motivo para o ajuste')) return 'Informe um motivo rastreável para o ajuste.'
   if (message.includes('precisa estar ativo')) return 'O item precisa estar ativo para receber movimentações.'
   if (message.includes('Item de estoque não encontrado')) return 'O item não foi encontrado ou está arquivado.'
+  if (message.includes('Fornecedor não encontrado')) return 'Selecione um fornecedor ativo da sua organização.'
   if (error.code === '23505') return 'Já existe um item ativo com este SKU.'
   if (error.code === '23514' || error.code === '22023' || error.code === '22003') {
     return 'Revise a quantidade, o custo e os demais campos informados.'
@@ -72,13 +74,25 @@ export async function searchInventoryItems(
 
 export async function getInventoryOptions(organizationId: string): Promise<InventoryOptions> {
   const supabase = requireClient()
-  const { data, error } = await supabase
-    .from('inventory_items')
-    .select('category, unit_of_measure')
-    .eq('organization_id', organizationId)
-    .is('deleted_at', null)
+  const [itemsResult, suppliersResult] = await Promise.all([
+    supabase
+      .from('inventory_items')
+      .select('category, unit_of_measure')
+      .eq('organization_id', organizationId)
+      .is('deleted_at', null),
+    supabase
+      .from('suppliers')
+      .select('id, legal_name, trade_name')
+      .eq('organization_id', organizationId)
+      .eq('status', 'active')
+      .is('deleted_at', null)
+      .order('legal_name'),
+  ])
+
+  const error = itemsResult.error ?? suppliersResult.error
 
   if (error) throw new Error(friendlyInventoryError(error))
+  const data = itemsResult.data
 
   return {
     categories: Array.from(new Set(
@@ -87,6 +101,10 @@ export async function getInventoryOptions(organizationId: string): Promise<Inven
     units: Array.from(new Set(
       (data ?? []).map((item) => item.unit_of_measure.trim()).filter(Boolean),
     )).sort((a, b) => a.localeCompare(b, 'pt-BR')),
+    suppliers: (suppliersResult.data ?? []).map((supplier) => ({
+      id: supplier.id,
+      name: supplier.trade_name || supplier.legal_name,
+    })),
   }
 }
 
@@ -107,6 +125,12 @@ export async function getInventoryItemDetails(organizationId: string, itemId: st
         average_unit_cost,
         status,
         notes,
+        supplier_id,
+        supplier:suppliers!inventory_items_supplier_organization_fk (
+          id,
+          legal_name,
+          trade_name
+        ),
         created_at,
         updated_at
       `)
@@ -135,8 +159,14 @@ export async function getInventoryItemDetails(organizationId: string, itemId: st
   )
   if (situationError) throw new Error(friendlyInventoryError(situationError))
 
+  const supplier = item.supplier as unknown as {
+    id: string
+    legal_name: string
+    trade_name: string | null
+  } | null
   return {
     ...item,
+    supplier: supplier ? { id: supplier.id, name: supplier.trade_name || supplier.legal_name } : null,
     stock_situation: situationData,
     movements: (movementsResult.data ?? []) as InventoryMovement[],
   } as InventoryItemDetails
@@ -221,5 +251,6 @@ export function inventoryItemToInput(item: InventoryItemSummary): InventoryItemI
     average_unit_cost: String(item.average_unit_cost),
     status: item.status,
     notes: item.notes ?? '',
+    supplier_id: 'supplier_id' in item && typeof item.supplier_id === 'string' ? item.supplier_id : '',
   }
 }

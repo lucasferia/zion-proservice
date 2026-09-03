@@ -79,12 +79,18 @@ export function EditInventoryItemPage() {
   }
 
   const item = detailsQuery.item.data
+  const formOptions = item.supplier && !optionsQuery.options.data.suppliers.some((supplier) => supplier.id === item.supplier!.id)
+    ? {
+        ...optionsQuery.options.data,
+        suppliers: [{ id: item.supplier.id, name: `${item.supplier.name} (arquivado)` }, ...optionsQuery.options.data.suppliers],
+      }
+    : optionsQuery.options.data
   return (
     <section className="form-page" aria-labelledby="edit-inventory-title">
       <FormPageHeading eyebrow="Revisão do cadastro" title="Editar item" />
       <span id="edit-inventory-title" className="sr-only">Editar item de estoque</span>
       <InventoryItemForm
-        options={optionsQuery.options.data}
+        options={formOptions}
         initialValue={inventoryItemToInput(item)}
         submitLabel="Salvar alterações"
         onSubmit={async (input) => {

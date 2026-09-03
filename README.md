@@ -1,6 +1,6 @@
 # ZION ProService
 
-Sistema web multi-tenant para a operação de manutenção de equipamentos fitness. O MVP cobre clientes e unidades, catálogo geral de equipamentos, estoque, ordens de serviço com consumo transacional de peças, fotos privadas, pagamentos, retornos e dashboard operacional.
+Sistema web multi-tenant para a operação de manutenção de equipamentos fitness. O MVP cobre clientes e unidades, catálogo geral de equipamentos, estoque e fornecedores, ordens de serviço com consumo transacional de peças, fotos privadas, pagamentos, retornos e dashboard operacional.
 
 ## Stack e requisitos
 
@@ -48,7 +48,13 @@ npx supabase test db
 npx supabase db lint --local
 ```
 
-O reset recria o banco local a partir de todas as migrations; não execute esse comando contra dados de produção. O bucket `maintenance-photos` é privado, aceita JPEG, PNG e WebP de até 10 MB e serve imagens por URLs assinadas temporárias.
+O reset recria o banco local a partir de todas as migrations; não execute esse comando contra dados de produção. Fotos de origem JPEG, PNG ou WebP de até 15 MB são orientadas, redimensionadas para até 1600 px e convertidas no navegador. O bucket `maintenance-photos` permanece privado, recebe somente WebP processado de até 1 MB e serve imagens por URLs assinadas temporárias. O Postgres guarda apenas os metadados do arquivo.
+
+## Retenção de dados
+
+O schema da aplicação não possui uma tabela própria de logs técnicos descartáveis. Os registros existentes são cadastrais ou fazem parte do histórico operacional, financeiro e de auditoria: organizações e membros, clientes e unidades, equipamentos, fornecedores, itens e movimentos de estoque, manutenções e peças, metadados de fotos, pagamentos e retornos. Nenhum deles participa de limpeza automática por idade.
+
+Logs de infraestrutura do Supabase/Vercel ficam fora das tabelas de negócio e devem seguir a retenção configurada nos respectivos provedores. Se no futuro houver uma tabela exclusiva de telemetria técnica, a limpeza deve ser implementada por função administrativa explícita, com limite de idade, escopo documentado e sem alcançar entidades de negócio.
 
 ## Validação do projeto
 

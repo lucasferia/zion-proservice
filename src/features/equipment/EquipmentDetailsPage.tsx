@@ -48,11 +48,11 @@ export function EquipmentDetailsPage() {
       await queryClient.invalidateQueries({ queryKey: equipmentKeys.all })
       navigate('/app/equipamentos', {
         replace: true,
-        state: { success: 'Equipamento excluído com sucesso.' },
+        state: { success: 'Equipamento arquivado com sucesso.' },
       })
     } catch (error) {
       setActionError(
-        error instanceof Error ? error.message : 'Não foi possível excluir o equipamento.',
+        error instanceof Error ? error.message : 'Não foi possível arquivar o equipamento.',
       )
       setArchivePending(false)
       setIsArchiving(false)
@@ -78,13 +78,13 @@ export function EquipmentDetailsPage() {
           </Link>
           {!archivePending ? (
             <button className="danger-text-button" type="button" onClick={() => setArchivePending(true)}>
-              Excluir equipamento
+              Arquivar equipamento
             </button>
           ) : (
             <div className="archive-confirm" role="alert">
-              <span>Excluir equipamento e histórico vinculado?</span>
+              <span>Arquivar equipamento? O histórico será preservado.</span>
               <button type="button" onClick={() => void handleDelete()} disabled={isArchiving}>
-                {isArchiving ? 'Excluindo…' : 'Sim, excluir definitivamente'}
+                {isArchiving ? 'Arquivando…' : 'Sim, arquivar'}
               </button>
               <button type="button" onClick={() => setArchivePending(false)} disabled={isArchiving}>
                 Cancelar
