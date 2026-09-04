@@ -27,6 +27,8 @@ export type InventoryItemSummary = {
   status: InventoryItemStatus
   notes: string | null
   stock_situation: InventorySituation
+  supplier_id: string | null
+  supplier_name: string | null
   created_at: string
   updated_at: string
 }
@@ -47,7 +49,6 @@ export type InventoryMovement = {
 }
 
 export type InventoryItemDetails = InventoryItemSummary & {
-  supplier_id: string | null
   supplier: InventorySupplierOption | null
   movements: InventoryMovement[]
 }
@@ -67,6 +68,7 @@ export type InventoryItemInput = {
 export type InventoryFilters = {
   category: string
   situation: InventorySituation | ''
+  supplier_id: string
 }
 
 export type InventoryOptions = {

@@ -1,6 +1,6 @@
 import { getSupabaseClient } from '../../lib/supabase'
 import { friendlyDataError } from '../clients/clientApi'
-import type { Supplier, SupplierInput } from './types'
+import type { Supplier, SupplierInput, SupplierInventoryItem } from './types'
 
 function requireClient() {
   const client = getSupabaseClient()
@@ -83,6 +83,33 @@ export async function archiveSupplier(organizationId: string, supplierId: string
     .update({ deleted_at: new Date().toISOString() })
     .eq('organization_id', organizationId)
     .eq('id', supplierId)
+    .is('deleted_at', null)
+    .select('id')
+    .single()
+  if (error) throw new Error(friendlySupplierError(error))
+}
+
+export async function getSupplierInventoryItems(organizationId: string) {
+  const { data, error } = await requireClient()
+    .from('inventory_items')
+    .select('id, name, sku, unit_of_measure, current_quantity, status, supplier_id')
+    .eq('organization_id', organizationId)
+    .is('deleted_at', null)
+    .order('name')
+  if (error) throw new Error(friendlySupplierError(error))
+  return (data ?? []) as SupplierInventoryItem[]
+}
+
+export async function setInventoryItemSupplier(
+  organizationId: string,
+  inventoryItemId: string,
+  supplierId: string | null,
+) {
+  const { error } = await requireClient()
+    .from('inventory_items')
+    .update({ supplier_id: supplierId })
+    .eq('organization_id', organizationId)
+    .eq('id', inventoryItemId)
     .is('deleted_at', null)
     .select('id')
     .single()

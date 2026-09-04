@@ -33,6 +33,16 @@ export type SupplierInput = {
   status: SupplierStatus
 }
 
+export type SupplierInventoryItem = {
+  id: string
+  name: string
+  sku: string | null
+  unit_of_measure: string
+  current_quantity: number
+  status: 'active' | 'inactive'
+  supplier_id: string | null
+}
+
 export function supplierToInput(supplier: Supplier): SupplierInput {
   return {
     legal_name: supplier.legal_name,

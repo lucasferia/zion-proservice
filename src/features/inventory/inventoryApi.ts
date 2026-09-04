@@ -66,6 +66,7 @@ export async function searchInventoryItems(
     search_term: search.trim() || null,
     filter_category: filters.category || null,
     filter_situation: filters.situation || null,
+    filter_supplier_id: filters.supplier_id || null,
   })
 
   if (error) throw new Error(friendlyInventoryError(error))
@@ -166,6 +167,7 @@ export async function getInventoryItemDetails(organizationId: string, itemId: st
   } | null
   return {
     ...item,
+    supplier_name: supplier ? supplier.trade_name || supplier.legal_name : null,
     supplier: supplier ? { id: supplier.id, name: supplier.trade_name || supplier.legal_name } : null,
     stock_situation: situationData,
     movements: (movementsResult.data ?? []) as InventoryMovement[],

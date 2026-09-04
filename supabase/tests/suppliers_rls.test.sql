@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(31);
+select plan(37);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -30,6 +30,7 @@ select ok(exists(
   where conname = 'inventory_items_supplier_organization_fk'
     and contype = 'f'
 ), 'FK composta de fornecedor foi criada');
+select ok(has_function_privilege('authenticated', 'public.search_inventory_items(uuid,text,text,text,uuid)', 'EXECUTE'), 'membro autenticado executa busca de estoque por fornecedor');
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'b1000000-0000-4000-8000-000000000001', true);
@@ -53,6 +54,20 @@ select lives_ok(
   $$ insert into public.inventory_items (organization_id, name, unit_of_measure, supplier_id) values (current_setting('test.supplier_org_a')::uuid, 'Correia vinculada', 'unidade', 'b1100000-0000-4000-8000-000000000001') $$,
   'item aceita fornecedor ativo do próprio tenant'
 );
+select is(
+  (select count(*) from public.search_inventory_items(current_setting('test.supplier_org_a')::uuid, null, null, null, 'b1100000-0000-4000-8000-000000000001')),
+  1::bigint,
+  'filtro de estoque retorna item vinculado ao fornecedor'
+);
+select lives_ok(
+  $$ update public.inventory_items set supplier_id = null where name = 'Correia vinculada' $$,
+  'membro pode remover o vínculo sem apagar o item'
+);
+select ok((select supplier_id is null from public.inventory_items where name = 'Correia vinculada'), 'remoção deixa item sem fornecedor');
+select lives_ok(
+  $$ update public.inventory_items set supplier_id = 'b1100000-0000-4000-8000-000000000001' where name = 'Correia vinculada' $$,
+  'membro pode vincular novamente o item ao fornecedor ativo'
+);
 select throws_like(
   $$ insert into public.inventory_items (organization_id, name, unit_of_measure, supplier_id) values (current_setting('test.supplier_org_a')::uuid, 'Item cross-tenant', 'unidade', 'b2100000-0000-4000-8000-000000000001') $$,
   '%Fornecedor não encontrado%', 'trigger bloqueia fornecedor de outro tenant'
@@ -65,6 +80,11 @@ select throws_like(
 select set_config('request.jwt.claim.sub', 'b2000000-0000-4000-8000-000000000002', true);
 select is((select count(*) from public.suppliers), 1::bigint, 'outro tenant não lê fornecedores da organização A');
 select is((select count(*) from public.search_suppliers(current_setting('test.supplier_org_b')::uuid, null, null)), 1::bigint, 'busca do tenant B retorna apenas seus dados');
+select is(
+  (select count(*) from public.search_inventory_items(current_setting('test.supplier_org_a')::uuid, null, null, null, 'b1100000-0000-4000-8000-000000000001')),
+  0::bigint,
+  'busca de estoque não agrega itens de outro tenant'
+);
 
 select set_config('request.jwt.claim.sub', 'b3000000-0000-4000-8000-000000000003', true);
 select is((select count(*) from public.suppliers), 3::bigint, 'technician ativo lê fornecedores do tenant');

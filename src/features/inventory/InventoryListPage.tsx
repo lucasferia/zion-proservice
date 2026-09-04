@@ -6,7 +6,7 @@ import { InventorySituationBadge } from './InventorySituationBadge'
 import { useInventoryItems } from './inventoryQueries'
 import { INVENTORY_SITUATIONS, type InventoryFilters, type InventorySituation } from './types'
 
-const emptyFilters: InventoryFilters = { category: '', situation: '' }
+const emptyFilters: InventoryFilters = { category: '', situation: '', supplier_id: '' }
 
 function SearchIcon() {
   return (
@@ -34,7 +34,7 @@ export function InventoryListPage() {
   const isLoading = organization.isLoading
     || (organization.isSuccess && (items.isLoading || options.isLoading))
   const error = organization.error ?? items.error ?? options.error
-  const hasFilters = Boolean(search || filters.category || filters.situation)
+  const hasFilters = Boolean(search || filters.category || filters.situation || filters.supplier_id)
   const counts = useMemo(() => {
     const initial: Record<InventorySituation, number> = {
       normal: 0,
@@ -103,6 +103,18 @@ export function InventoryListPage() {
             <option value="">Todas as categorias</option>
             {options.data?.categories.map((category) => (
               <option key={category} value={category}>{category}</option>
+            ))}
+          </select>
+        </label>
+        <label className="inventory-filter">
+          <span>Fornecedor</span>
+          <select
+            value={filters.supplier_id}
+            onChange={(event) => setFilters((current) => ({ ...current, supplier_id: event.target.value }))}
+          >
+            <option value="">Todos os fornecedores</option>
+            {options.data?.suppliers.map((supplier) => (
+              <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
             ))}
           </select>
         </label>
@@ -176,6 +188,7 @@ export function InventoryListPage() {
                 <div>
                   <strong>{item.name}</strong>
                   <span>{item.sku || 'Sem SKU'} · {item.category || 'Sem categoria'}</span>
+                  <small>{item.supplier_name ? `Fornecedor: ${item.supplier_name}` : 'Sem fornecedor vinculado'}</small>
                   {item.status === 'inactive' && <small>Item inativo</small>}
                 </div>
               </div>

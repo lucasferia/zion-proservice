@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { useDeferredValue } from 'react'
 import { useActiveOrganization } from '../clients/clientQueries'
-import { getSupplier, searchSuppliers } from './supplierApi'
+import { getSupplier, getSupplierInventoryItems, searchSuppliers } from './supplierApi'
 
 export const supplierKeys = {
   all: ['suppliers'] as const,
   lists: () => ['suppliers', 'list'] as const,
   list: (organizationId: string, search: string, status: string) => ['suppliers', 'list', organizationId, search, status] as const,
   detail: (organizationId: string, supplierId: string) => ['suppliers', 'detail', organizationId, supplierId] as const,
+  inventory: (organizationId: string, supplierId: string) => ['suppliers', 'detail', organizationId, supplierId, 'inventory'] as const,
 }
 
 export function useSuppliers(search: string, status: string) {
@@ -28,5 +29,10 @@ export function useSupplier(supplierId: string | undefined) {
     queryFn: () => getSupplier(organization.data!, supplierId!),
     enabled: Boolean(organization.data && supplierId),
   })
-  return { organization, supplier }
+  const inventory = useQuery({
+    queryKey: supplierKeys.inventory(organization.data ?? '', supplierId ?? ''),
+    queryFn: () => getSupplierInventoryItems(organization.data!),
+    enabled: Boolean(organization.data && supplierId),
+  })
+  return { organization, supplier, inventory }
 }

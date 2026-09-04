@@ -1,6 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
+set local timezone = 'America/Sao_Paulo';
 select plan(51);
 
 insert into auth.users (id, email, raw_user_meta_data)

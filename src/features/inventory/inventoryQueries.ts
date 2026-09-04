@@ -13,6 +13,7 @@ export const inventoryKeys = {
     search,
     filters.category,
     filters.situation,
+    filters.supplier_id,
   ] as const,
   details: () => [...inventoryKeys.all, 'detail'] as const,
   detail: (organizationId: string, itemId: string) => [

@@ -18,6 +18,7 @@ const emptyItem: InventoryItemInput = {
 type InventoryItemFormProps = {
   options: InventoryOptions
   initialValue?: InventoryItemInput
+  initialSupplierId?: string
   submitLabel: string
   onSubmit: (input: InventoryItemInput) => Promise<void>
 }
@@ -25,10 +26,14 @@ type InventoryItemFormProps = {
 export function InventoryItemForm({
   options,
   initialValue = emptyItem,
+  initialSupplierId,
   submitLabel,
   onSubmit,
 }: InventoryItemFormProps) {
-  const [input, setInput] = useState(initialValue)
+  const [input, setInput] = useState(() => ({
+    ...initialValue,
+    supplier_id: initialSupplierId ?? initialValue.supplier_id,
+  }))
   const [errors, setErrors] = useState<FieldErrors<InventoryItemInput>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)

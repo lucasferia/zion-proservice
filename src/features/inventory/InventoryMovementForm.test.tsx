@@ -20,6 +20,7 @@ const item: InventoryItemDetails = {
   created_at: '2026-08-26T12:00:00Z',
   updated_at: '2026-08-26T12:00:00Z',
   supplier_id: null,
+  supplier_name: null,
   supplier: null,
   movements: [],
 }

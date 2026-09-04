@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { PageSkeleton, PageState } from '../../components/PageState'
 import {
   createInventoryItem,
@@ -26,6 +26,7 @@ function FormPageHeading({ title, eyebrow }: { title: string; eyebrow: string })
 export function CreateInventoryItemPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
   const { organization, options } = useInventoryOptions()
   const isLoading = organization.isLoading || (organization.isSuccess && options.isLoading)
   const error = organization.error ?? options.error
@@ -41,6 +42,7 @@ export function CreateInventoryItemPage() {
       <span id="create-inventory-title" className="sr-only">Cadastrar item de estoque</span>
       <InventoryItemForm
         options={options.data!}
+        initialSupplierId={options.data!.suppliers.some((supplier) => supplier.id === searchParams.get('fornecedor')) ? searchParams.get('fornecedor')! : undefined}
         submitLabel="Cadastrar item"
         onSubmit={async (input) => {
           const id = await createInventoryItem(organization.data!, input)
