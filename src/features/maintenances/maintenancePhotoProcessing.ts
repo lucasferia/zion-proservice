@@ -4,8 +4,8 @@ import {
 } from './maintenancePhotoTypes'
 import { validateMaintenancePhoto } from './maintenancePhotoValidation'
 
-const WEBP_QUALITIES = [0.75, 0.65, 0.55, 0.45, 0.35, 0.25] as const
-const DIMENSION_SCALES = [1, 0.85, 0.7, 0.55, 0.4] as const
+const WEBP_QUALITIES = [0.85, 0.8, 0.75, 0.65, 0.55, 0.45] as const
+const DIMENSION_SCALES = [1, 0.9, 0.8, 0.7, 0.55] as const
 
 export type DecodedPhoto = {
   width: number
@@ -142,5 +142,5 @@ export async function prepareMaintenancePhoto(
     photo.close()
   }
 
-  throw new Error('Não foi possível reduzir a imagem para até 1 MB. Escolha outra foto.')
+  throw new Error('Não foi possível converter a imagem para WebP com até 10 MB. Escolha outra foto.')
 }

@@ -21,10 +21,10 @@ export function friendlyMaintenancePhotoError(error: { code?: string; message?: 
   if (!error) return 'Não foi possível concluir a operação com a foto.'
   const message = error.message ?? ''
   if (message.includes('maximum allowed size') || message.includes('maximum')) {
-    return 'A imagem processada deve ter no máximo 1 MB.'
+    return 'A imagem processada deve ter no máximo 10 MB.'
   }
   if (message.includes('mime type') || message.includes('MIME')) {
-    return 'Use uma imagem JPEG, PNG ou WebP.'
+    return 'Use uma imagem JPEG, PNG ou WebP. Ela será convertida automaticamente para WebP.'
   }
   if (message.includes('somente leitura') || message.includes('Fotos desta manutenção')) {
     return 'As fotos desta manutenção são somente leitura.'

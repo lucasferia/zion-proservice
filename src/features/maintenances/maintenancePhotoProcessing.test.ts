@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
-import { MAINTENANCE_PHOTO_SOURCE_MAX_BYTES } from './maintenancePhotoTypes'
+import {
+  MAINTENANCE_PHOTO_FINAL_MAX_BYTES,
+  MAINTENANCE_PHOTO_SOURCE_MAX_BYTES,
+} from './maintenancePhotoTypes'
 import {
   containedPhotoDimensions,
   prepareMaintenancePhoto,
@@ -12,11 +15,11 @@ function decoded(width = 4000, height = 3000): DecodedPhoto {
 }
 
 describe('prepareMaintenancePhoto', () => {
-  it('respeita 1600 px, inicia em qualidade 0,75 e reduz até ficar abaixo de 1 MB', async () => {
+  it('converte para WebP em 1600 px, preserva qualidade e reduz até ficar abaixo de 10 MB', async () => {
     const photo = decoded()
     const encode = vi.fn()
-      .mockResolvedValueOnce(new Blob([new Uint8Array(1_100_000)], { type: 'image/webp' }))
-      .mockResolvedValueOnce(new Blob([new Uint8Array(800_000)], { type: 'image/webp' }))
+      .mockResolvedValueOnce(new Blob([new Uint8Array(MAINTENANCE_PHOTO_FINAL_MAX_BYTES + 1)], { type: 'image/webp' }))
+      .mockResolvedValueOnce(new Blob([new Uint8Array(8_000_000)], { type: 'image/webp' }))
     const dependencies: PhotoProcessingDependencies = {
       decode: vi.fn().mockResolvedValue(photo),
       encode,
@@ -27,11 +30,11 @@ describe('prepareMaintenancePhoto', () => {
       dependencies,
     )
 
-    expect(encode).toHaveBeenNthCalledWith(1, photo, 1600, 1200, 0.75)
-    expect(encode).toHaveBeenNthCalledWith(2, photo, 1600, 1200, 0.65)
+    expect(encode).toHaveBeenNthCalledWith(1, photo, 1600, 1200, 0.85)
+    expect(encode).toHaveBeenNthCalledWith(2, photo, 1600, 1200, 0.8)
     expect(result.type).toBe('image/webp')
     expect(result.name).toBe('Foto-visita.webp')
-    expect(result.size).toBe(800_000)
+    expect(result.size).toBe(8_000_000)
     expect(photo.close).toHaveBeenCalledOnce()
   })
 
@@ -56,7 +59,7 @@ describe('prepareMaintenancePhoto', () => {
         decode: vi.fn().mockResolvedValue(photo),
         encode: vi.fn().mockResolvedValue(new Blob(['png'], { type: 'image/png' })),
       },
-    )).rejects.toThrow(/reduzir a imagem/)
+    )).rejects.toThrow(/converter a imagem para WebP/)
     expect(photo.close).toHaveBeenCalledOnce()
   })
 })

@@ -48,7 +48,7 @@ npx supabase test db
 npx supabase db lint --local
 ```
 
-O reset recria o banco local a partir de todas as migrations; não execute esse comando contra dados de produção. Fotos de origem JPEG, PNG ou WebP de até 15 MB são orientadas, redimensionadas para até 1600 px e convertidas no navegador. O bucket `maintenance-photos` permanece privado, recebe somente WebP processado de até 1 MB e serve imagens por URLs assinadas temporárias. O Postgres guarda apenas os metadados do arquivo.
+O reset recria o banco local a partir de todas as migrations; não execute esse comando contra dados de produção. Fotos de origem JPEG, PNG ou WebP de até 15 MB são orientadas, redimensionadas para até 1600 px e convertidas no navegador. O bucket `maintenance-photos` permanece privado, recebe somente WebP processado de até 10 MB e serve imagens por URLs assinadas temporárias. O Postgres guarda apenas os metadados do arquivo.
 
 ## Retenção de dados
 
