@@ -296,14 +296,18 @@ export async function addMaintenancePart(
   input: MaintenancePartInput,
 ) {
   const supabase = requireClient()
-  const { error } = await supabase.from('maintenance_parts').insert({
-    organization_id: organizationId,
-    maintenance_id: maintenanceId,
-    inventory_item_id: input.inventory_item_id,
-    quantity: parseDecimal(input.quantity),
-    unit_cost_amount: parseDecimal(input.unit_cost_amount),
-    unit_charge_amount: parseDecimal(input.unit_charge_amount),
-  })
+  const { error } = await supabase
+    .from('maintenance_parts')
+    .insert({
+      organization_id: organizationId,
+      maintenance_id: maintenanceId,
+      inventory_item_id: input.inventory_item_id,
+      quantity: parseDecimal(input.quantity),
+      unit_cost_amount: parseDecimal(input.unit_cost_amount),
+      unit_charge_amount: parseDecimal(input.unit_charge_amount),
+    })
+    .select('id')
+    .single()
   if (error) throw new Error(friendlyMaintenanceError(error))
 }
 
@@ -322,6 +326,8 @@ export async function updateMaintenancePart(
     })
     .eq('organization_id', organizationId)
     .eq('id', partId)
+    .select('id')
+    .single()
   if (error) throw new Error(friendlyMaintenanceError(error))
 }
 
@@ -332,6 +338,8 @@ export async function removeMaintenancePart(organizationId: string, partId: stri
     .delete()
     .eq('organization_id', organizationId)
     .eq('id', partId)
+    .select('id')
+    .single()
   if (error) throw new Error(friendlyMaintenanceError(error))
 }
 
@@ -343,7 +351,9 @@ export async function completeMaintenance(organizationId: string, maintenanceId:
     target_return_date: returnDate,
   })
   if (error) throw new Error(friendlyMaintenanceError(error))
-  return (data?.[0] ?? null) as CompletionResult | null
+  const result = data?.[0] as CompletionResult | undefined
+  if (!result) throw new Error('A conclusão não retornou a confirmação da OS e do consumo de estoque.')
+  return result
 }
 
 export async function cancelMaintenance(

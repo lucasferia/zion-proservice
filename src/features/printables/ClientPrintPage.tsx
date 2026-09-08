@@ -26,8 +26,6 @@ function issuedAt() {
 
 export function ClientPrintableDocument({ record }: { record: ClientPrintRecord }) {
   const { client, equipment } = record
-  const locations = new Map(client.client_locations.map((location) => [location.id, location.name]))
-
   return (
     <article className="print-document client-print-document" aria-labelledby="client-print-title">
       <header className="print-document__header">
@@ -68,18 +66,17 @@ export function ClientPrintableDocument({ record }: { record: ClientPrintRecord 
       </section>
 
       <section className="print-section" aria-labelledby="client-equipment-title">
-        <div className="print-section__heading"><span>03</span><h2 id="client-equipment-title">Equipamentos vinculados</h2></div>
+        <div className="print-section__heading"><span>03</span><h2 id="client-equipment-title">Equipamentos atendidos</h2></div>
         {equipment.length === 0 ? (
-          <p className="print-empty">Nenhum equipamento ativo vinculado ao cliente.</p>
+          <p className="print-empty">Nenhum equipamento foi registrado em uma OS deste cliente.</p>
         ) : (
           <div className="print-table-wrap">
             <table className="print-table">
-              <caption className="sr-only">Equipamentos vinculados ao cliente</caption>
-              <thead><tr><th>Equipamento</th><th>Unidade</th><th>Identificação</th><th>Status</th></tr></thead>
+              <caption className="sr-only">Equipamentos atendidos em ordens de serviço do cliente</caption>
+              <thead><tr><th>Equipamento</th><th>Identificação</th><th>Status</th></tr></thead>
               <tbody>{equipment.map((item) => (
                 <tr key={item.id}>
                   <td><strong>{item.name}</strong><span>{item.category} · {[item.brand, item.model].filter(Boolean).join(' ') || 'Marca/modelo não informados'}</span></td>
-                  <td>{item.client_location_id ? locations.get(item.client_location_id) || item.location_name || 'Unidade arquivada' : 'Sem unidade específica'}</td>
                   <td><span>Série: {item.serial_number || '—'}</span><span>Patrimônio: {item.asset_tag || '—'}</span></td>
                   <td>{getEquipmentStatusLabel(item.status)}</td>
                 </tr>

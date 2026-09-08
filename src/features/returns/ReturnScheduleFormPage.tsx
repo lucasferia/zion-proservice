@@ -1,11 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { PageSkeleton, PageState } from '../../components/PageState'
 import { createReturnSchedule } from './returnApi'
 import { ReturnScheduleForm } from './ReturnScheduleForm'
-import { useReturnScheduleOptions } from './returnQueries'
+import { returnKeys, useReturnScheduleOptions } from './returnQueries'
 
 export function CreateReturnSchedulePage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { organization, options } = useReturnScheduleOptions()
   const error = organization.error ?? options.error
   const loading = organization.isLoading || (organization.isSuccess && options.isLoading)
@@ -22,6 +24,7 @@ export function CreateReturnSchedulePage() {
         options={options.data}
         onSubmit={async (input) => {
           await createReturnSchedule(organization.data!, input)
+          await queryClient.invalidateQueries({ queryKey: returnKeys.all })
           navigate('/app/agenda', { replace: true, state: { success: 'Retorno agendado com sucesso.' } })
         }}
       />

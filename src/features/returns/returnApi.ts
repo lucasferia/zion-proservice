@@ -84,15 +84,20 @@ export async function getReturnScheduleOptions(organizationId: string): Promise<
 
 export async function createReturnSchedule(organizationId: string, input: ReturnScheduleInput) {
   const supabase = requireClient()
-  const { error } = await supabase.from('return_schedules').insert({
-    organization_id: organizationId,
-    client_id: input.client_id,
-    client_location_id: input.client_location_id || null,
-    equipment_id: input.equipment_id,
-    scheduled_date: input.scheduled_date,
-    notes: input.notes.trim() || null,
-  })
+  const { data, error } = await supabase
+    .from('return_schedules')
+    .insert({
+      organization_id: organizationId,
+      client_id: input.client_id,
+      client_location_id: input.client_location_id || null,
+      equipment_id: input.equipment_id,
+      scheduled_date: input.scheduled_date,
+      notes: input.notes.trim() || null,
+    })
+    .select('id')
+    .single()
   if (error) throw new Error(friendlyReturnError(error))
+  return data.id as string
 }
 
 export async function completeReturnSchedule(organizationId: string, returnScheduleId: string) {

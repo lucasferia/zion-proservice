@@ -61,7 +61,7 @@ describe('ClientPrintableDocument', () => {
     expect(screen.getByRole('heading', { level: 3, name: 'Unidade Centro' })).toBeInTheDocument()
     expect(screen.getByText(/Praça da Sé, 100/)).toBeInTheDocument()
 
-    const table = screen.getByRole('table', { name: 'Equipamentos vinculados ao cliente' })
+    const table = screen.getByRole('table', { name: 'Equipamentos atendidos em ordens de serviço do cliente' })
     expect(within(table).getByText('Esteira 01')).toBeInTheDocument()
     expect(within(table).getByText('Operacional')).toBeInTheDocument()
     expect(screen.queryByText('Cliente de outra organização')).not.toBeInTheDocument()

@@ -132,7 +132,9 @@ export function ReturnScheduleListPage() {
                     type="button"
                     key={day.date}
                     className={`calendar-day${day.inMonth ? '' : ' calendar-day--outside'}${isToday ? ' calendar-day--today' : ''}${isSelected ? ' calendar-day--selected' : ''}`}
-                    onClick={() => setSelectedDate(day.date)}
+                    onClick={() => day.inMonth
+                      ? setSelectedDate(day.date)
+                      : selectMonth(day.date.slice(0, 7), day.date)}
                     aria-pressed={isSelected}
                     aria-label={`${formatReturnDate(day.date)}, ${dayEvents.length} ${dayEvents.length === 1 ? 'evento' : 'eventos'}`}
                   >

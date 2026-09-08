@@ -240,7 +240,9 @@ export async function recordInventoryMovement(
   })
 
   if (error) throw new Error(friendlyInventoryError(error))
-  return (data?.[0] ?? null) as InventoryMovementResult | null
+  const result = data?.[0] as InventoryMovementResult | undefined
+  if (!result) throw new Error('A movimentação não retornou a confirmação do novo saldo.')
+  return result
 }
 
 export function inventoryItemToInput(item: InventoryItemSummary): InventoryItemInput {

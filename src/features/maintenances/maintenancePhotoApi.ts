@@ -96,15 +96,19 @@ export async function uploadMaintenancePhoto(
   if (upload.error) throw new Error(friendlyMaintenancePhotoError(upload.error))
 
   onProgress?.(70)
-  const metadata = await supabase.from('maintenance_photos').insert({
-    organization_id: organizationId,
-    maintenance_id: maintenanceId,
-    kind,
-    storage_path: storagePath,
-    mime_type: preparedFile.type,
-    file_size: preparedFile.size,
-    sort_order: sortOrder,
-  })
+  const metadata = await supabase
+    .from('maintenance_photos')
+    .insert({
+      organization_id: organizationId,
+      maintenance_id: maintenanceId,
+      kind,
+      storage_path: storagePath,
+      mime_type: preparedFile.type,
+      file_size: preparedFile.size,
+      sort_order: sortOrder,
+    })
+    .select('id')
+    .single()
 
   if (metadata.error) {
     await supabase.storage.from(MAINTENANCE_PHOTO_BUCKET).remove([storagePath])
@@ -125,13 +129,12 @@ export async function removeMaintenancePhoto(photo: MaintenancePhoto) {
 
   if (metadata.error) throw new Error(friendlyMaintenancePhotoError(metadata.error))
 
+  if (!metadata.data) {
+    throw new Error('A foto não foi removida. Ela pode estar somente leitura ou já não existir.')
+  }
+
   const storage = await supabase.storage.from(MAINTENANCE_PHOTO_BUCKET).remove([photo.storage_path])
   if (storage.error) throw new Error(friendlyMaintenancePhotoError(storage.error))
-
-  if (!metadata.data) {
-    // Permite concluir a limpeza de um objeto órfão após uma tentativa anterior interrompida.
-    return
-  }
 }
 
 export async function reorderMaintenancePhotos(

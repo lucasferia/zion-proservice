@@ -114,18 +114,23 @@ export async function createPayment(
   input: PaymentInput,
 ) {
   const supabase = requireClient()
-  const { error } = await supabase.from('payments').insert({
-    organization_id: organizationId,
-    client_id: clientId,
-    maintenance_id: maintenanceId,
-    amount: parsePaymentAmount(input.amount),
-    method: input.method,
-    status: input.status,
-    paid_at: input.status === 'received' ? businessDateTimeToIso(input.paid_at) : null,
-    due_date: input.status === 'pending' ? input.due_date : input.due_date || null,
-    notes: input.notes.trim() || null,
-  })
+  const { data, error } = await supabase
+    .from('payments')
+    .insert({
+      organization_id: organizationId,
+      client_id: clientId,
+      maintenance_id: maintenanceId,
+      amount: parsePaymentAmount(input.amount),
+      method: input.method,
+      status: input.status,
+      paid_at: input.status === 'received' ? businessDateTimeToIso(input.paid_at) : null,
+      due_date: input.status === 'pending' ? input.due_date : input.due_date || null,
+      notes: input.notes.trim() || null,
+    })
+    .select('id')
+    .single()
   if (error) throw new Error(friendlyPaymentError(error))
+  return data.id as string
 }
 
 export async function receivePayment(

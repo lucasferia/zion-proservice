@@ -1,6 +1,6 @@
 import { getSupabaseClient } from '../../lib/supabase'
 import { getClientDetails } from '../clients/clientApi'
-import { searchEquipment } from '../equipment/equipmentApi'
+import type { EquipmentSummary } from '../equipment/types'
 import { getMaintenanceDetails } from '../maintenances/maintenanceApi'
 import { getMaintenancePhotos } from '../maintenances/maintenancePhotoApi'
 import { getMaintenancePayments } from '../payments/paymentApi'
@@ -23,16 +23,48 @@ async function getOrganizationName(organizationId: string) {
 }
 
 export async function getClientPrintRecord(organizationId: string, clientId: string) {
-  const [organizationName, client, equipment] = await Promise.all([
+  const supabase = requireClient()
+  const [organizationName, client, maintenanceEquipment] = await Promise.all([
     getOrganizationName(organizationId),
     getClientDetails(organizationId, clientId),
-    searchEquipment(organizationId, '', {
-      clientId,
-      locationId: '',
-      category: '',
-      status: '',
-    }),
+    supabase
+      .from('maintenances')
+      .select('equipment_id')
+      .eq('organization_id', organizationId)
+      .eq('client_id', clientId),
   ])
+
+  if (maintenanceEquipment.error) {
+    throw new Error('Não foi possível consultar os equipamentos atendidos deste cliente.')
+  }
+
+  const equipmentIds = [...new Set(
+    (maintenanceEquipment.data ?? []).map((item) => item.equipment_id),
+  )]
+  let equipment: EquipmentSummary[] = []
+
+  if (equipmentIds.length > 0) {
+    const result = await supabase
+      .from('equipment')
+      .select('id, organization_id, name, category, brand, model, serial_number, asset_tag, status, notes, created_at, updated_at')
+      .eq('organization_id', organizationId)
+      .in('id', equipmentIds)
+      .order('name')
+
+    if (result.error) {
+      throw new Error('Não foi possível carregar os equipamentos atendidos deste cliente.')
+    }
+
+    equipment = (result.data ?? []).map((item) => ({
+      ...item,
+      client_id: null,
+      client_location_id: null,
+      client_name: null,
+      location_name: null,
+      location_city: null,
+    })) as EquipmentSummary[]
+  }
+
   return { organization_name: organizationName, client, equipment }
 }
 
