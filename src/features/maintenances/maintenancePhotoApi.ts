@@ -1,4 +1,5 @@
 import { getSupabaseClient } from '../../lib/supabase'
+import { createClientId } from '../../lib/clientId'
 import { friendlyDataError } from '../clients/clientApi'
 import {
   MAINTENANCE_PHOTO_BUCKET,
@@ -83,7 +84,7 @@ export async function uploadMaintenancePhoto(
   const preparedFile = await prepareMaintenancePhoto(file)
   const supabase = requireClient()
   const extension = maintenancePhotoExtension(preparedFile.type)
-  const storagePath = `${organizationId}/${maintenanceId}/${kind}/${crypto.randomUUID()}.${extension}`
+  const storagePath = `${organizationId}/${maintenanceId}/${kind}/${createClientId()}.${extension}`
 
   onStage?.('uploading')
   onProgress?.(35)

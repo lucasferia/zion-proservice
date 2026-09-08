@@ -5,6 +5,7 @@ import {
 } from './maintenancePhotoTypes'
 import {
   containedPhotoDimensions,
+  decodeInBrowser,
   prepareMaintenancePhoto,
   type DecodedPhoto,
   type PhotoProcessingDependencies,
@@ -59,7 +60,47 @@ describe('prepareMaintenancePhoto', () => {
         decode: vi.fn().mockResolvedValue(photo),
         encode: vi.fn().mockResolvedValue(new Blob(['png'], { type: 'image/png' })),
       },
-    )).rejects.toThrow(/converter a imagem para WebP/)
+    )).rejects.toThrow(/conversor WebP não está disponível/)
     expect(photo.close).toHaveBeenCalledOnce()
+  })
+
+  it('usa o elemento de imagem quando createImageBitmap falha em um navegador mobile', async () => {
+    const originalCreateImageBitmap = window.createImageBitmap
+    const originalCreateObjectURL = URL.createObjectURL
+    const originalRevokeObjectURL = URL.revokeObjectURL
+    const originalImage = globalThis.Image
+    const createImageBitmap = vi.fn().mockRejectedValue(new Error('não suportado'))
+    const revokeObjectURL = vi.fn()
+
+    class MobileImage {
+      decoding = ''
+      naturalWidth = 3024
+      naturalHeight = 4032
+      onload: (() => void) | null = null
+      onerror: (() => void) | null = null
+
+      set src(_value: string) {
+        queueMicrotask(() => this.onload?.())
+      }
+    }
+
+    Object.defineProperty(window, 'createImageBitmap', { configurable: true, value: createImageBitmap })
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:mobile-photo') })
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL })
+    vi.stubGlobal('Image', MobileImage)
+
+    try {
+      const result = await decodeInBrowser(new File(['jpeg'], 'camera.jpg', { type: 'image/jpeg' }))
+      expect(createImageBitmap).toHaveBeenCalledTimes(2)
+      expect(result.width).toBe(3024)
+      expect(result.height).toBe(4032)
+      result.close()
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:mobile-photo')
+    } finally {
+      Object.defineProperty(window, 'createImageBitmap', { configurable: true, value: originalCreateImageBitmap })
+      Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: originalCreateObjectURL })
+      Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: originalRevokeObjectURL })
+      vi.stubGlobal('Image', originalImage)
+    }
   })
 })

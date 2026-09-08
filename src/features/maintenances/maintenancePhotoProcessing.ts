@@ -36,23 +36,16 @@ export function containedPhotoDimensions(width: number, height: number, maximum:
   }
 }
 
-async function decodeInBrowser(file: File): Promise<DecodedPhoto> {
-  if ('createImageBitmap' in window) {
-    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
-    return {
-      width: bitmap.width,
-      height: bitmap.height,
-      draw: (context, width, height) => context.drawImage(bitmap, 0, 0, width, height),
-      close: () => bitmap.close(),
-    }
-  }
-
+async function decodeWithImageElement(file: File): Promise<DecodedPhoto> {
   const objectUrl = URL.createObjectURL(file)
   try {
     const image = new Image()
     image.decoding = 'async'
-    image.src = objectUrl
-    await image.decode()
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve()
+      image.onerror = () => reject(new Error('Falha ao carregar a imagem.'))
+      image.src = objectUrl
+    })
     return {
       width: image.naturalWidth,
       height: image.naturalHeight,
@@ -63,6 +56,30 @@ async function decodeInBrowser(file: File): Promise<DecodedPhoto> {
     URL.revokeObjectURL(objectUrl)
     throw error
   }
+}
+
+export async function decodeInBrowser(file: File): Promise<DecodedPhoto> {
+  if (typeof window.createImageBitmap === 'function') {
+    try {
+      let bitmap: ImageBitmap
+      try {
+        bitmap = await window.createImageBitmap(file, { imageOrientation: 'from-image' })
+      } catch {
+        bitmap = await window.createImageBitmap(file)
+      }
+      return {
+        width: bitmap.width,
+        height: bitmap.height,
+        draw: (context, width, height) => context.drawImage(bitmap, 0, 0, width, height),
+        close: () => bitmap.close(),
+      }
+    } catch {
+      // Safari e alguns WebViews expõem createImageBitmap, mas falham com fotos da câmera.
+      // O elemento <img> preserva a orientação aplicada pelo próprio navegador.
+    }
+  }
+
+  return decodeWithImageElement(file)
 }
 
 async function encodeInBrowser(
@@ -81,8 +98,16 @@ async function encodeInBrowser(
   context.imageSmoothingQuality = 'high'
   photo.draw(context, width, height)
 
-  return new Promise<Blob | null>((resolve) => {
-    canvas.toBlob(resolve, 'image/webp', quality)
+  return new Promise<Blob | null>((resolve, reject) => {
+    if (typeof canvas.toBlob !== 'function') {
+      reject(new Error('Conversão WebP indisponível.'))
+      return
+    }
+    try {
+      canvas.toBlob(resolve, 'image/webp', quality)
+    } catch (error) {
+      reject(error)
+    }
   })
 }
 
@@ -123,13 +148,20 @@ export async function prepareMaintenancePhoto(
       MAINTENANCE_PHOTO_MAX_DIMENSION,
     )
 
+    let generatedWebp = false
     for (const scale of DIMENSION_SCALES) {
       const width = Math.max(1, Math.round(contained.width * scale))
       const height = Math.max(1, Math.round(contained.height * scale))
 
       for (const quality of WEBP_QUALITIES) {
-        const blob = await dependencies.encode(photo, width, height, quality)
+        let blob: Blob | null
+        try {
+          blob = await dependencies.encode(photo, width, height, quality)
+        } catch {
+          continue
+        }
         if (!blob || blob.size <= 0 || blob.type !== 'image/webp') continue
+        generatedWebp = true
         if (blob.size <= MAINTENANCE_PHOTO_FINAL_MAX_BYTES) {
           return new File([blob], webpFileName(file.name), {
             type: 'image/webp',
@@ -137,6 +169,10 @@ export async function prepareMaintenancePhoto(
           })
         }
       }
+    }
+
+    if (!generatedWebp) {
+      throw new Error('O conversor WebP não está disponível neste navegador. Atualize o navegador e tente novamente.')
     }
   } finally {
     photo.close()

@@ -2845,6 +2845,8 @@ textarea:focus-visible,
 .part-add-form__footer { display: flex; min-height: 72px; padding: 12px 20px; background: #0f161f; border-top: 1px solid #263447; justify-content: space-between; gap: 20px; align-items: center; }
 .part-add-form__footer > span { color: #718198; font-size: 0.61rem; line-height: 1.45; }
 .part-add-form__footer .secondary-button { min-width: 176px; min-height: 46px; justify-content: center; }
+.part-editor-feedback:not(:empty) { margin-top: 12px; }
+.part-editor-feedback .alert { margin: 0; }
 .parts-empty { margin: 16px 4px 4px; color: #75859a; font-size: 0.7rem; }
 .parts-plan-list { margin-top: 12px; border-top: 1px solid var(--zion-border); }
 .parts-plan-row { display: grid; min-height: 84px; padding: 13px 4px; border-bottom: 1px solid #202b3a; grid-template-columns: minmax(220px, 1.4fr) 110px minmax(130px, 0.5fr) auto; gap: 16px; align-items: center; }

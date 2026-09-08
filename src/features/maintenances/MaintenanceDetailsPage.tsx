@@ -68,14 +68,13 @@ export function MaintenanceDetailsPage() {
   )
 
   async function refreshAfterPartChange() {
-    await Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: maintenanceKeys.detail(organization.data!, details.id),
-      }),
+    const [refreshed] = await Promise.all([
+      maintenance.refetch(),
       queryClient.invalidateQueries({
         queryKey: paymentKeys.maintenance(organization.data!, details.id),
       }),
     ])
+    if (refreshed.error) throw refreshed.error
   }
 
   async function handleComplete() {

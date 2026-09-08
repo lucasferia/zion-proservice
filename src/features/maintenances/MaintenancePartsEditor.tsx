@@ -43,6 +43,7 @@ export function MaintenancePartsEditor({
   const [drafts, setDrafts] = useState<Record<string, MaintenancePartInput>>({})
   const [errors, setErrors] = useState<FieldErrors<MaintenancePartInput>>({})
   const [actionError, setActionError] = useState<string | null>(null)
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null)
   const [pendingAction, setPendingAction] = useState<string | null>(null)
   const availableItems = useMemo(
     () => inventory.filter((item) => !parts.some((part) => part.inventory_item_id === item.id)),
@@ -67,6 +68,7 @@ export function MaintenancePartsEditor({
     const nextErrors = validateMaintenancePart(input, selectedItem?.current_quantity ?? null)
     setErrors(nextErrors)
     setActionError(null)
+    setActionSuccess(null)
     if (hasValidationErrors(nextErrors)) {
       event.currentTarget.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
       return
@@ -75,6 +77,7 @@ export function MaintenancePartsEditor({
     try {
       await onAdd(input)
       setInput(emptyPart)
+      setActionSuccess(`${selectedItem?.name ?? 'Material'} adicionado à OS. Os totais foram atualizados.`)
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Não foi possível adicionar a peça.')
     } finally {
@@ -98,6 +101,7 @@ export function MaintenancePartsEditor({
       return
     }
     setActionError(null)
+    setActionSuccess(null)
     setPendingAction(part.id)
     try {
       await onUpdate(part.id, draft)
@@ -106,6 +110,7 @@ export function MaintenancePartsEditor({
         delete next[part.id]
         return next
       })
+      setActionSuccess(`${part.item_name} atualizado com sucesso.`)
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Não foi possível atualizar a peça.')
     } finally {
@@ -115,9 +120,11 @@ export function MaintenancePartsEditor({
 
   async function handleRemove(part: MaintenancePart) {
     setActionError(null)
+    setActionSuccess(null)
     setPendingAction(part.id)
     try {
       await onRemove(part.id)
+      setActionSuccess(`${part.item_name} removido da OS.`)
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Não foi possível remover a peça.')
     } finally {
@@ -176,7 +183,10 @@ export function MaintenancePartsEditor({
         </footer>
       </form>
 
-      {actionError && <div className="alert alert--error" role="alert">{actionError}</div>}
+      <div className="part-editor-feedback" aria-live="polite">
+        {actionSuccess && <div className="alert alert--success" role="status">{actionSuccess}</div>}
+        {actionError && <div className="alert alert--error" role="alert">{actionError}</div>}
+      </div>
 
       {parts.length === 0 ? (
         <p className="parts-empty">Nenhum material previsto. A OS também pode ser concluída somente com mão de obra.</p>

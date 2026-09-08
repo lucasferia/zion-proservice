@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { createClientId } from '../../lib/clientId'
 import {
   removeMaintenancePhoto,
   reorderMaintenancePhotos,
@@ -102,6 +103,7 @@ export function MaintenancePhotoSection({
     const files = Array.from(event.target.files ?? [])
     event.target.value = ''
     if (!files.length) return
+    setActionSuccess(null)
 
     const invalid = files.map((file) => ({ file, error: validateMaintenancePhoto(file) })).filter((item) => item.error)
     if (invalid.length) {
@@ -114,7 +116,7 @@ export function MaintenancePhotoSection({
     const validFiles = files.filter((file) => !validateMaintenancePhoto(file))
     let uploaded = 0
     for (const [index, file] of validFiles.entries()) {
-      const jobId = crypto.randomUUID()
+      const jobId = createClientId()
       const previewUrl = URL.createObjectURL(file)
       const job: UploadJob = { id: jobId, kind, name: file.name, previewUrl, progress: 0, stage: 'preparing' }
       setJobs((current) => [...current, job])

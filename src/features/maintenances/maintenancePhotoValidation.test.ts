@@ -7,6 +7,16 @@ describe('validateMaintenancePhoto', () => {
     expect(validateMaintenancePhoto({ type, size: MAINTENANCE_PHOTO_SOURCE_MAX_BYTES })).toBeNull()
   })
 
+  it('aceita aliases e MIME ausente de provedores de arquivo mobile quando a extensão é segura', () => {
+    expect(validateMaintenancePhoto({ type: 'image/jpg', size: 100, name: 'camera.jpg' })).toBeNull()
+    expect(validateMaintenancePhoto({ type: '', size: 100, name: 'galeria.JPEG' })).toBeNull()
+    expect(validateMaintenancePhoto({ type: 'application/octet-stream', size: 100, name: 'foto.webp' })).toBeNull()
+  })
+
+  it('explica como corrigir uma foto HEIC do iPhone', () => {
+    expect(validateMaintenancePhoto({ type: 'image/heic', size: 100, name: 'IMG_0001.HEIC' })).toMatch(/Mais Compatível/)
+  })
+
   it('recusa tipo não permitido', () => {
     expect(validateMaintenancePhoto({ type: 'image/gif', size: 100 })).toMatch(/JPEG, PNG ou WebP/)
   })

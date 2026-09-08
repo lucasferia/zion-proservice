@@ -42,6 +42,7 @@ describe('MaintenancePartsEditor', () => {
       unit_cost_amount: '45',
       unit_charge_amount: '45',
     })
+    expect(await screen.findByRole('status')).toHaveTextContent('Correia RT 250 adicionado à OS')
   })
 
   it('permite informar custo pago e preço cobrado diferentes', async () => {
