@@ -38,7 +38,7 @@ values
 select ok(exists(select 1 from storage.buckets where id = 'maintenance-photos'), 'bucket exclusivo foi criado');
 select is((select public from storage.buckets where id = 'maintenance-photos'), false, 'bucket é privado');
 select is((select file_size_limit from storage.buckets where id = 'maintenance-photos'), 10485760::bigint, 'bucket limita cada arquivo processado a 10 MB');
-select is((select allowed_mime_types from storage.buckets where id = 'maintenance-photos'), array['image/webp']::text[], 'bucket recebe somente WebP processado');
+select is((select allowed_mime_types from storage.buckets where id = 'maintenance-photos'), array['image/webp', 'image/jpeg']::text[], 'bucket recebe WebP e fallback JPEG processados');
 select is((select relrowsecurity from pg_class where oid = 'public.maintenance_photos'::regclass), true, 'RLS está habilitada em maintenance_photos');
 
 set local role authenticated;
@@ -68,14 +68,14 @@ select throws_like(
     'insert into public.maintenance_photos (organization_id, maintenance_id, kind, storage_path, mime_type, file_size) values (%L, %L, %L, %L, %L, 100)',
     current_setting('test.photo_org_a'), '71500000-0000-4000-8000-000000000001', 'before',
     current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/invalida.gif', 'image/gif'
-  ), '%WebP otimizado de até 10 MB%', 'tabela rejeita novo MIME diferente de WebP'
+  ), '%JPEG ou WebP processado de até 10 MB%', 'tabela rejeita novo MIME diferente de JPEG e WebP'
 );
 select throws_like(
   format(
     'insert into public.maintenance_photos (organization_id, maintenance_id, kind, storage_path, mime_type, file_size) values (%L, %L, %L, %L, %L, 10485761)',
     current_setting('test.photo_org_a'), '71500000-0000-4000-8000-000000000001', 'before',
     current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/grande.webp', 'image/webp'
-  ), '%WebP otimizado de até 10 MB%', 'tabela rejeita novo arquivo processado maior que 10 MB'
+  ), '%JPEG ou WebP processado de até 10 MB%', 'tabela rejeita novo arquivo processado maior que 10 MB'
 );
 select throws_like(
   format(
@@ -111,16 +111,16 @@ select is((select count(*) from storage.objects where bucket_id = 'maintenance-p
 select lives_ok(
   format(
     'insert into storage.objects (bucket_id, name, owner_id, metadata) values (%L, %L, %L, %L::jsonb)',
-    'maintenance-photos', current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/segunda.webp',
-    '73000000-0000-4000-8000-000000000003', '{"mimetype":"image/webp","size":2048}'
-  ), 'technician envia objeto no tenant em que é membro'
+    'maintenance-photos', current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/segunda.jpg',
+    '73000000-0000-4000-8000-000000000003', '{"mimetype":"image/jpeg","size":2048}'
+  ), 'technician envia fallback JPEG do Safari no tenant em que é membro'
 );
 select lives_ok(
   format(
     'insert into public.maintenance_photos (organization_id, maintenance_id, kind, storage_path, mime_type, file_size, sort_order) values (%L, %L, %L, %L, %L, 2048, 1)',
     current_setting('test.photo_org_a'), '71500000-0000-4000-8000-000000000001', 'before',
-    current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/segunda.webp', 'image/webp'
-  ), 'technician registra metadado no tenant em que é membro'
+    current_setting('test.photo_org_a') || '/71500000-0000-4000-8000-000000000001/before/segunda.jpg', 'image/jpeg'
+  ), 'technician registra metadado do fallback JPEG do Safari'
 );
 select lives_ok(
   $$ select public.reorder_maintenance_photos(
@@ -136,7 +136,7 @@ select lives_ok(
   'RPC reordena fotos de manutenção aberta'
 );
 select is(
-  (select sort_order from public.maintenance_photos where storage_path like '%/segunda.webp'),
+  (select sort_order from public.maintenance_photos where storage_path like '%/segunda.jpg'),
   0,
   'RPC persiste a nova primeira posição'
 );

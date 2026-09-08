@@ -5,7 +5,10 @@ import {
 import { isHeicPhotoFile, validateMaintenancePhoto } from './maintenancePhotoValidation'
 
 const WEBP_QUALITIES = [0.85, 0.8, 0.75, 0.65, 0.55, 0.45] as const
+const JPEG_QUALITIES = [0.85, 0.8, 0.75, 0.65, 0.55, 0.45] as const
 const DIMENSION_SCALES = [1, 0.9, 0.8, 0.7, 0.55] as const
+
+type ProcessedPhotoMimeType = 'image/webp' | 'image/jpeg'
 
 export type DecodedPhoto = {
   width: number
@@ -20,6 +23,7 @@ export type PhotoProcessingDependencies = {
     photo: DecodedPhoto,
     width: number,
     height: number,
+    mimeType: ProcessedPhotoMimeType,
     quality: number,
   ) => Promise<Blob | null>
 }
@@ -119,6 +123,7 @@ async function encodeInBrowser(
   photo: DecodedPhoto,
   width: number,
   height: number,
+  mimeType: ProcessedPhotoMimeType,
   quality: number,
 ) {
   const canvas = document.createElement('canvas')
@@ -129,15 +134,19 @@ async function encodeInBrowser(
 
   context.imageSmoothingEnabled = true
   context.imageSmoothingQuality = 'high'
+  if (mimeType === 'image/jpeg') {
+    context.fillStyle = '#ffffff'
+    context.fillRect(0, 0, width, height)
+  }
   photo.draw(context, width, height)
 
   return new Promise<Blob | null>((resolve, reject) => {
     if (typeof canvas.toBlob !== 'function') {
-      reject(new Error('Conversão WebP indisponível.'))
+      reject(new Error('Conversão de imagem indisponível.'))
       return
     }
     try {
-      canvas.toBlob(resolve, 'image/webp', quality)
+      canvas.toBlob(resolve, mimeType, quality)
     } catch (error) {
       reject(error)
     }
@@ -149,7 +158,7 @@ const browserDependencies: PhotoProcessingDependencies = {
   encode: encodeInBrowser,
 }
 
-function webpFileName(originalName: string) {
+function processedFileName(originalName: string, mimeType: ProcessedPhotoMimeType) {
   const baseName = originalName.replace(/\.[^.]+$/, '').trim() || 'foto'
   const safeName = baseName
     .normalize('NFD')
@@ -157,8 +166,16 @@ function webpFileName(originalName: string) {
     .replace(/[^a-zA-Z0-9_-]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 80) || 'foto'
-  return `${safeName}.webp`
+  return `${safeName}.${mimeType === 'image/webp' ? 'webp' : 'jpg'}`
 }
+
+const OUTPUT_FORMATS = [
+  { mimeType: 'image/webp', qualities: WEBP_QUALITIES },
+  { mimeType: 'image/jpeg', qualities: JPEG_QUALITIES },
+] as const satisfies ReadonlyArray<{
+  mimeType: ProcessedPhotoMimeType
+  qualities: readonly number[]
+}>
 
 export async function prepareMaintenancePhoto(
   file: File,
@@ -184,35 +201,43 @@ export async function prepareMaintenancePhoto(
       MAINTENANCE_PHOTO_MAX_DIMENSION,
     )
 
-    let generatedWebp = false
-    for (const scale of DIMENSION_SCALES) {
-      const width = Math.max(1, Math.round(contained.width * scale))
-      const height = Math.max(1, Math.round(contained.height * scale))
+    let generatedCompatibleImage = false
+    formatLoop: for (const { mimeType, qualities } of OUTPUT_FORMATS) {
+      let encoderAvailable = false
+      for (const scale of DIMENSION_SCALES) {
+        const width = Math.max(1, Math.round(contained.width * scale))
+        const height = Math.max(1, Math.round(contained.height * scale))
 
-      for (const quality of WEBP_QUALITIES) {
-        let blob: Blob | null
-        try {
-          blob = await dependencies.encode(photo, width, height, quality)
-        } catch {
-          continue
-        }
-        if (!blob || blob.size <= 0 || blob.type !== 'image/webp') continue
-        generatedWebp = true
-        if (blob.size <= MAINTENANCE_PHOTO_FINAL_MAX_BYTES) {
-          return new File([blob], webpFileName(file.name), {
-            type: 'image/webp',
-            lastModified: Date.now(),
-          })
+        for (const quality of qualities) {
+          let blob: Blob | null
+          try {
+            blob = await dependencies.encode(photo, width, height, mimeType, quality)
+          } catch {
+            if (!encoderAvailable) continue formatLoop
+            continue
+          }
+          if (!blob || blob.size <= 0 || blob.type !== mimeType) {
+            if (!encoderAvailable) continue formatLoop
+            continue
+          }
+          encoderAvailable = true
+          generatedCompatibleImage = true
+          if (blob.size <= MAINTENANCE_PHOTO_FINAL_MAX_BYTES) {
+            return new File([blob], processedFileName(file.name, mimeType), {
+              type: mimeType,
+              lastModified: Date.now(),
+            })
+          }
         }
       }
     }
 
-    if (!generatedWebp) {
-      throw new Error('O conversor WebP não está disponível neste navegador. Atualize o navegador e tente novamente.')
+    if (!generatedCompatibleImage) {
+      throw new Error('Este navegador não conseguiu gerar uma imagem reduzida compatível. Tente escolher a foto reduzida no iPhone ou use outra imagem.')
     }
   } finally {
     photo.close()
   }
 
-  throw new Error('Não foi possível converter a imagem para WebP com até 10 MB. Escolha outra foto.')
+  throw new Error('Não foi possível reduzir a imagem para até 10 MB. Escolha a opção de foto reduzida no iPhone ou use outra imagem.')
 }

@@ -123,7 +123,7 @@ describe('MaintenancePhotoSection', () => {
       target: { files: [new File(['heic'], 'IMG_1024.HEIC', { type: 'image/heic' })] },
     })
 
-    expect(await screen.findByText(/Convertendo foto do iPhone/)).toBeInTheDocument()
+    expect(await screen.findByText(/Preparando foto do iPhone/)).toBeInTheDocument()
     expect(screen.getByLabelText('Foto HEIC do iPhone em conversão')).toBeInTheDocument()
     await act(async () => finishConversion())
     expect(await screen.findByText('Foto enviada com segurança.')).toBeInTheDocument()

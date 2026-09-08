@@ -50,5 +50,6 @@ export function validateMaintenancePhoto(file: Pick<File, 'size' | 'type'> & Par
 
 export function maintenancePhotoExtension(mimeType: string) {
   if (mimeType === 'image/webp') return 'webp'
-  throw new Error('A imagem precisa ser convertida para WebP antes do envio.')
+  if (mimeType === 'image/jpeg') return 'jpg'
+  throw new Error('A imagem processada precisa estar em JPEG ou WebP antes do envio.')
 }

@@ -33,8 +33,8 @@ describe('prepareMaintenancePhoto', () => {
       dependencies,
     )
 
-    expect(encode).toHaveBeenNthCalledWith(1, photo, 1600, 1200, 0.85)
-    expect(encode).toHaveBeenNthCalledWith(2, photo, 1600, 1200, 0.8)
+    expect(encode).toHaveBeenNthCalledWith(1, photo, 1600, 1200, 'image/webp', 0.85)
+    expect(encode).toHaveBeenNthCalledWith(2, photo, 1600, 1200, 'image/webp', 0.8)
     expect(result.type).toBe('image/webp')
     expect(result.name).toBe('Foto-visita.webp')
     expect(result.size).toBe(8_000_000)
@@ -54,15 +54,27 @@ describe('prepareMaintenancePhoto', () => {
     expect(decode).not.toHaveBeenCalled()
   })
 
-  it('não aceita fallback de encoder que não produza WebP válido', async () => {
+  it('usa JPEG reduzido quando o Safari não oferece encoder WebP', async () => {
     const photo = decoded(800, 600)
-    await expect(prepareMaintenancePhoto(
+    const encode = vi.fn().mockImplementation(
+      (_photo, _width, _height, mimeType: string) => Promise.resolve(
+        mimeType === 'image/webp'
+          ? new Blob(['png'], { type: 'image/png' })
+          : new Blob(['jpeg'], { type: 'image/jpeg' }),
+      ),
+    )
+
+    const result = await prepareMaintenancePhoto(
       new File(['png'], 'foto.png', { type: 'image/png' }),
       {
         decode: vi.fn().mockResolvedValue(photo),
-        encode: vi.fn().mockResolvedValue(new Blob(['png'], { type: 'image/png' })),
+        encode,
       },
-    )).rejects.toThrow(/conversor WebP não está disponível/)
+    )
+
+    expect(result.type).toBe('image/jpeg')
+    expect(result.name).toBe('foto.jpg')
+    expect(encode).toHaveBeenLastCalledWith(photo, 800, 600, 'image/jpeg', 0.85)
     expect(photo.close).toHaveBeenCalledOnce()
   })
 

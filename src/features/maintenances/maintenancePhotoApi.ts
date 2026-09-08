@@ -25,7 +25,7 @@ export function friendlyMaintenancePhotoError(error: { code?: string; message?: 
     return 'A imagem processada deve ter no máximo 10 MB.'
   }
   if (message.includes('mime type') || message.includes('MIME')) {
-    return 'Use uma imagem JPEG, PNG ou WebP. Ela será convertida automaticamente para WebP.'
+    return 'Use uma imagem JPEG, PNG, WebP, HEIC ou HEIF. Ela será reduzida antes do envio.'
   }
   if (message.includes('somente leitura') || message.includes('Fotos desta manutenção')) {
     return 'As fotos desta manutenção são somente leitura.'
@@ -90,7 +90,7 @@ export async function uploadMaintenancePhoto(
   onProgress?.(35)
   const upload = await supabase.storage.from(MAINTENANCE_PHOTO_BUCKET).upload(storagePath, preparedFile, {
     cacheControl: '300',
-    contentType: 'image/webp',
+    contentType: preparedFile.type,
     upsert: false,
   })
   if (upload.error) throw new Error(friendlyMaintenancePhotoError(upload.error))
@@ -101,7 +101,7 @@ export async function uploadMaintenancePhoto(
     maintenance_id: maintenanceId,
     kind,
     storage_path: storagePath,
-    mime_type: 'image/webp',
+    mime_type: preparedFile.type,
     file_size: preparedFile.size,
     sort_order: sortOrder,
   })

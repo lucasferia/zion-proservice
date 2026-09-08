@@ -247,7 +247,7 @@ export function MaintenancePhotoSection({
                   <div className="photo-empty-state">
                     <span aria-hidden="true">▧</span>
                     <strong>Nenhuma foto {kindOption.label.toLowerCase()}</strong>
-                    <p>{open ? 'JPEG, PNG, WebP ou foto HEIC do iPhone · origem até 15 MB. Conversão automática para WebP.' : 'Nenhum registro foi anexado nesta etapa.'}</p>
+                    <p>{open ? 'JPEG, PNG, WebP ou foto HEIC do iPhone · origem até 15 MB. Redução automática para até 10 MB.' : 'Nenhum registro foi anexado nesta etapa.'}</p>
                   </div>
                 ) : (
                   <div className="photo-grid">
@@ -284,7 +284,7 @@ export function MaintenancePhotoSection({
                           </div>
                         ) : <img src={job.previewUrl} alt="Prévia da foto em envio" />}
                         <figcaption>
-                          <span>{job.stage === 'converting-heic' ? 'Convertendo foto do iPhone' : job.stage === 'preparing' ? 'Preparando imagem · convertendo para WebP' : 'Enviando imagem'} · {job.name}</span>
+                          <span>{job.stage === 'converting-heic' ? 'Preparando foto do iPhone' : job.stage === 'preparing' ? 'Preparando imagem · reduzindo tamanho' : 'Enviando imagem'} · {job.name}</span>
                           <strong>{job.progress}%</strong>
                         </figcaption>
                         <div className="photo-upload-progress"><span style={{ width: `${job.progress}%` }} /></div>

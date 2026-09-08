@@ -30,6 +30,7 @@ describe('validateMaintenancePhoto', () => {
 
   it('deriva apenas extensões aprovadas do MIME', () => {
     expect(maintenancePhotoExtension('image/webp')).toBe('webp')
-    expect(() => maintenancePhotoExtension('image/gif')).toThrow(/convertida para WebP/)
+    expect(maintenancePhotoExtension('image/jpeg')).toBe('jpg')
+    expect(() => maintenancePhotoExtension('image/gif')).toThrow(/JPEG ou WebP/)
   })
 })
