@@ -12,7 +12,7 @@ import {
   type MaintenancePhotoKind,
   type MaintenancePhotoSectionProps,
 } from './maintenancePhotoTypes'
-import { validateMaintenancePhoto } from './maintenancePhotoValidation'
+import { isHeicPhotoFile, MAINTENANCE_PHOTO_ACCEPT, validateMaintenancePhoto } from './maintenancePhotoValidation'
 import { isMaintenanceOpen } from './types'
 
 type UploadJob = {
@@ -21,7 +21,8 @@ type UploadJob = {
   name: string
   previewUrl: string
   progress: number
-  stage: 'preparing' | 'uploading'
+  stage: 'preparing' | 'converting-heic' | 'uploading'
+  isHeic: boolean
 }
 
 function formatFileSize(bytes: number) {
@@ -118,7 +119,7 @@ export function MaintenancePhotoSection({
     for (const [index, file] of validFiles.entries()) {
       const jobId = createClientId()
       const previewUrl = URL.createObjectURL(file)
-      const job: UploadJob = { id: jobId, kind, name: file.name, previewUrl, progress: 0, stage: 'preparing' }
+      const job: UploadJob = { id: jobId, kind, name: file.name, previewUrl, progress: 0, stage: 'preparing', isHeic: isHeicPhotoFile(file) }
       setJobs((current) => [...current, job])
       try {
         await uploadMaintenancePhoto(
@@ -222,7 +223,7 @@ export function MaintenancePhotoSection({
                         <span>Galeria</span>
                         <input
                           type="file"
-                          accept="image/jpeg,image/png,image/webp"
+                          accept={MAINTENANCE_PHOTO_ACCEPT}
                           multiple
                           aria-label={`Escolher fotos ${kindOption.label} da galeria`}
                           onChange={(event) => void handleFiles(kind, event)}
@@ -232,7 +233,7 @@ export function MaintenancePhotoSection({
                         <span>Câmera</span>
                         <input
                           type="file"
-                          accept="image/jpeg,image/png,image/webp"
+                          accept={MAINTENANCE_PHOTO_ACCEPT}
                           capture="environment"
                           aria-label={`Tirar foto ${kindOption.label} com a câmera`}
                           onChange={(event) => void handleFiles(kind, event)}
@@ -246,7 +247,7 @@ export function MaintenancePhotoSection({
                   <div className="photo-empty-state">
                     <span aria-hidden="true">▧</span>
                     <strong>Nenhuma foto {kindOption.label.toLowerCase()}</strong>
-                    <p>{open ? 'JPEG, PNG ou WebP · origem até 15 MB. Conversão automática para WebP de até 10 MB.' : 'Nenhum registro foi anexado nesta etapa.'}</p>
+                    <p>{open ? 'JPEG, PNG, WebP ou foto HEIC do iPhone · origem até 15 MB. Conversão automática para WebP.' : 'Nenhum registro foi anexado nesta etapa.'}</p>
                   </div>
                 ) : (
                   <div className="photo-grid">
@@ -276,9 +277,14 @@ export function MaintenancePhotoSection({
                     ))}
                     {kindJobs.map((job) => (
                       <figure className="photo-card photo-card--uploading" key={job.id}>
-                        <img src={job.previewUrl} alt="Prévia da foto em envio" />
+                        {job.isHeic ? (
+                          <div className="photo-card__heic-preview" aria-label="Foto HEIC do iPhone em conversão">
+                            <strong>HEIC</strong>
+                            <span>Foto do iPhone</span>
+                          </div>
+                        ) : <img src={job.previewUrl} alt="Prévia da foto em envio" />}
                         <figcaption>
-                          <span>{job.stage === 'preparing' ? 'Preparando imagem · convertendo para WebP' : 'Enviando imagem'} · {job.name}</span>
+                          <span>{job.stage === 'converting-heic' ? 'Convertendo foto do iPhone' : job.stage === 'preparing' ? 'Preparando imagem · convertendo para WebP' : 'Enviando imagem'} · {job.name}</span>
                           <strong>{job.progress}%</strong>
                         </figcaption>
                         <div className="photo-upload-progress"><span style={{ width: `${job.progress}%` }} /></div>

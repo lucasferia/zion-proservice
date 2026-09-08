@@ -2647,6 +2647,9 @@ textarea:focus-visible,
 .photo-remove-confirm button:last-child { color: #a9bdd2; background: #172231; border-color: #35465a; }
 .photo-card--uploading { display: grid; min-height: 190px; grid-template-rows: minmax(0, 1fr) auto auto; opacity: 0.8; }
 .photo-card--uploading > img { min-height: 0; aspect-ratio: 4 / 3; filter: saturate(0.65); }
+.photo-card__heic-preview { display: grid; min-height: 150px; color: #80c8fb; background: repeating-linear-gradient(135deg, rgb(0 120 212 / 8%) 0 8px, transparent 8px 16px), #0b121a; place-content: center; justify-items: center; gap: 5px; }
+.photo-card__heic-preview strong { font-family: 'Barlow Condensed', Impact, sans-serif; font-size: 2rem; letter-spacing: 0.06em; }
+.photo-card__heic-preview span { color: #778ba2; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .photo-card--uploading figcaption strong { font-family: 'Barlow Condensed', Impact, sans-serif; font-size: 0.9rem; }
 .photo-upload-progress { height: 3px; background: #1a2635; }
 .photo-upload-progress span { display: block; height: 100%; background: var(--zion-primary-bright); transition: width 180ms ease; }

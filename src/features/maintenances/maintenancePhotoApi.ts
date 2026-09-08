@@ -8,7 +8,7 @@ import {
   type MaintenancePhotoKind,
 } from './maintenancePhotoTypes'
 import { prepareMaintenancePhoto } from './maintenancePhotoProcessing'
-import { maintenancePhotoExtension, validateMaintenancePhoto } from './maintenancePhotoValidation'
+import { isHeicPhotoFile, maintenancePhotoExtension, validateMaintenancePhoto } from './maintenancePhotoValidation'
 
 type PhotoRow = Omit<MaintenancePhoto, 'signed_url'>
 
@@ -74,12 +74,12 @@ export async function uploadMaintenancePhoto(
   file: File,
   sortOrder: number,
   onProgress?: (progress: number) => void,
-  onStage?: (stage: 'preparing' | 'uploading') => void,
+  onStage?: (stage: 'preparing' | 'converting-heic' | 'uploading') => void,
 ) {
   const validationError = validateMaintenancePhoto(file)
   if (validationError) throw new Error(validationError)
 
-  onStage?.('preparing')
+  onStage?.(isHeicPhotoFile(file) ? 'converting-heic' : 'preparing')
   onProgress?.(5)
   const preparedFile = await prepareMaintenancePhoto(file)
   const supabase = requireClient()

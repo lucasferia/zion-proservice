@@ -2,7 +2,7 @@ import {
   MAINTENANCE_PHOTO_FINAL_MAX_BYTES,
   MAINTENANCE_PHOTO_MAX_DIMENSION,
 } from './maintenancePhotoTypes'
-import { validateMaintenancePhoto } from './maintenancePhotoValidation'
+import { isHeicPhotoFile, validateMaintenancePhoto } from './maintenancePhotoValidation'
 
 const WEBP_QUALITIES = [0.85, 0.8, 0.75, 0.65, 0.55, 0.45] as const
 const DIMENSION_SCALES = [1, 0.9, 0.8, 0.7, 0.55] as const
@@ -58,7 +58,40 @@ async function decodeWithImageElement(file: File): Promise<DecodedPhoto> {
   }
 }
 
+type HeicConverter = (file: File) => Promise<Blob>
+
+async function convertHeicInBrowser(file: File) {
+  const { heicTo } = await import('heic-to/csp')
+  return heicTo({ blob: file, type: 'image/jpeg', quality: 0.9 })
+}
+
+export async function convertHeicSource(
+  file: File,
+  converter: HeicConverter = convertHeicInBrowser,
+) {
+  const jpeg = await converter(file)
+  if (!jpeg || jpeg.size <= 0 || jpeg.type !== 'image/jpeg') {
+    throw new Error('A foto HEIC não pôde ser convertida para um formato compatível.')
+  }
+  const baseName = file.name.replace(/\.(heic|heif)$/i, '') || 'foto-iphone'
+  return new File([jpeg], `${baseName}.jpg`, { type: 'image/jpeg', lastModified: file.lastModified })
+}
+
+export async function isHeicSource(file: File) {
+  if (isHeicPhotoFile(file)) return true
+  const header = new Uint8Array(await file.slice(0, 40).arrayBuffer())
+  if (header.length < 12) return false
+  const signature = String.fromCharCode(...header)
+  return signature.slice(4, 8) === 'ftyp'
+    && /heic|heix|hevc|hevx|heim|heis|mif1|msf1/.test(signature.slice(8))
+}
+
 export async function decodeInBrowser(file: File): Promise<DecodedPhoto> {
+  if (await isHeicSource(file)) {
+    const jpeg = await convertHeicSource(file)
+    return decodeWithImageElement(jpeg)
+  }
+
   if (typeof window.createImageBitmap === 'function') {
     try {
       let bitmap: ImageBitmap
@@ -138,6 +171,9 @@ export async function prepareMaintenancePhoto(
   try {
     photo = await dependencies.decode(file)
   } catch {
+    if (isHeicPhotoFile(file)) {
+      throw new Error('Não foi possível converter esta foto do iPhone. Tente novamente ou escolha outra imagem.')
+    }
     throw new Error('Não foi possível abrir esta imagem. Escolha outra foto da galeria ou da câmera.')
   }
 

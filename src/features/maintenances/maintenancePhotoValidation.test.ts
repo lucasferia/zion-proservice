@@ -13,12 +13,14 @@ describe('validateMaintenancePhoto', () => {
     expect(validateMaintenancePhoto({ type: 'application/octet-stream', size: 100, name: 'foto.webp' })).toBeNull()
   })
 
-  it('explica como corrigir uma foto HEIC do iPhone', () => {
-    expect(validateMaintenancePhoto({ type: 'image/heic', size: 100, name: 'IMG_0001.HEIC' })).toMatch(/Mais Compatível/)
+  it('aceita HEIC e HEIF como formatos de origem do iPhone', () => {
+    expect(validateMaintenancePhoto({ type: 'image/heic', size: 100, name: 'IMG_0001.HEIC' })).toBeNull()
+    expect(validateMaintenancePhoto({ type: '', size: 100, name: 'IMG_0002.HEIF' })).toBeNull()
+    expect(validateMaintenancePhoto({ type: 'image/heic-sequence', size: 100, name: 'burst.heic' })).toBeNull()
   })
 
   it('recusa tipo não permitido', () => {
-    expect(validateMaintenancePhoto({ type: 'image/gif', size: 100 })).toMatch(/JPEG, PNG ou WebP/)
+    expect(validateMaintenancePhoto({ type: 'image/gif', size: 100 })).toMatch(/JPEG, PNG, WebP, HEIC ou HEIF/)
   })
 
   it('recusa arquivo vazio e origem maior que 15 MB', () => {

@@ -53,10 +53,10 @@ describe('MaintenancePhotoSection', () => {
     expect(screen.getByText('Nenhuma foto depois')).toBeInTheDocument()
     const gallery = screen.getByLabelText('Escolher fotos Antes da galeria')
     const camera = screen.getByLabelText('Tirar foto Antes com a câmera')
-    expect(gallery).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp')
+    expect(gallery).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif')
     expect(gallery).not.toHaveAttribute('capture')
     expect(gallery).toHaveAttribute('multiple')
-    expect(camera).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp')
+    expect(camera).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif')
     expect(camera).toHaveAttribute('capture', 'environment')
     expect(camera).not.toHaveAttribute('multiple')
     expect(screen.getByLabelText('Escolher fotos Depois da galeria')).toBeInTheDocument()
@@ -107,6 +107,25 @@ describe('MaintenancePhotoSection', () => {
     await act(async () => finishPreparation())
     expect(await screen.findByText(/Enviando imagem/)).toBeInTheDocument()
     await act(async () => finishUpload())
+    expect(await screen.findByText('Foto enviada com segurança.')).toBeInTheDocument()
+  })
+
+  it('aceita uma foto HEIC do iPhone e informa a conversão', async () => {
+    let finishConversion: () => void = () => {}
+    const conversion = new Promise<void>((resolve) => { finishConversion = resolve })
+    vi.mocked(uploadMaintenancePhoto).mockImplementation(async (...args) => {
+      args[6]?.('converting-heic')
+      await conversion
+    })
+    render(<MaintenancePhotoSection organizationId="org-1" maintenanceId="maintenance-1" status="draft" />)
+
+    fireEvent.change(screen.getByLabelText('Escolher fotos Antes da galeria'), {
+      target: { files: [new File(['heic'], 'IMG_1024.HEIC', { type: 'image/heic' })] },
+    })
+
+    expect(await screen.findByText(/Convertendo foto do iPhone/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Foto HEIC do iPhone em conversão')).toBeInTheDocument()
+    await act(async () => finishConversion())
     expect(await screen.findByText('Foto enviada com segurança.')).toBeInTheDocument()
   })
 

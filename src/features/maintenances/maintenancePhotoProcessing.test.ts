@@ -5,7 +5,9 @@ import {
 } from './maintenancePhotoTypes'
 import {
   containedPhotoDimensions,
+  convertHeicSource,
   decodeInBrowser,
+  isHeicSource,
   prepareMaintenancePhoto,
   type DecodedPhoto,
   type PhotoProcessingDependencies,
@@ -102,5 +104,24 @@ describe('prepareMaintenancePhoto', () => {
       Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: originalRevokeObjectURL })
       vi.stubGlobal('Image', originalImage)
     }
+  })
+
+  it('converte HEIC para JPEG temporário antes do pipeline WebP', async () => {
+    const converter = vi.fn().mockResolvedValue(new Blob(['jpeg'], { type: 'image/jpeg' }))
+    const source = new File(['heic'], 'IMG_1024.HEIC', { type: 'image/heic', lastModified: 123 })
+
+    const result = await convertHeicSource(source, converter)
+
+    expect(converter).toHaveBeenCalledWith(source)
+    expect(result.name).toBe('IMG_1024.jpg')
+    expect(result.type).toBe('image/jpeg')
+    expect(result.lastModified).toBe(123)
+  })
+
+  it('reconhece HEIC pelo cabeçalho mesmo quando o iPhone informa MIME incorreto', async () => {
+    const header = new Uint8Array([0, 0, 0, 24, 102, 116, 121, 112, 104, 101, 105, 99])
+    const source = new File([header], 'IMG_1024.jpg', { type: 'image/jpeg' })
+
+    await expect(isHeicSource(source)).resolves.toBe(true)
   })
 })
