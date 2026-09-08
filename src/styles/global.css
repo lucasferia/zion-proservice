@@ -2565,7 +2565,9 @@ textarea:focus-visible,
 .technical-record-grid article:last-child { border-right: 0; }
 .technical-record-grid article > span { color: #5f7189; font-size: 0.56rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
 .technical-record-grid p { margin: 22px 0 0; color: #b2bdca; font-size: 0.72rem; line-height: 1.7; white-space: pre-wrap; }
-.parts-total { font-family: 'Barlow Condensed', Impact, sans-serif; font-size: 2rem; }
+.parts-heading-total { display: grid; min-width: 160px; padding-left: 18px; border-left: 1px solid #2a384a; justify-items: end; gap: 3px; }
+.parts-heading-total > span { color: #6e8199; font-size: 0.56rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.parts-total { color: #eaf6ff; font-family: 'Barlow Condensed', Impact, sans-serif; font-size: 1.65rem; line-height: 1; }
 
 .maintenance-photos__heading { gap: 18px; }
 .maintenance-photos__privacy { color: #6f8197; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -2822,10 +2824,27 @@ textarea:focus-visible,
 .payment-inline-confirm textarea { min-height: 65px; }
 
 .maintenance-parts-editor { padding: 16px; background: #0d131b; border: 1px solid var(--zion-border); border-radius: var(--zion-radius-md); }
-.part-add-form { display: grid; padding: 16px; background: #111923; border: 1px solid #2c394b; border-radius: 10px; grid-template-columns: minmax(230px, 1.5fr) minmax(170px, 0.65fr) auto; gap: 12px; align-items: end; }
-.part-add-form--priced { grid-template-columns: minmax(220px, 1.35fr) minmax(95px, 0.4fr) minmax(160px, 0.7fr) minmax(170px, 0.72fr) auto; }
-.part-add-form__item { min-width: 0; }
-.part-add-form .secondary-button { min-height: 46px; }
+.part-add-form { overflow: hidden; background: #111923; border: 1px solid #2c394b; border-radius: 10px; }
+.part-add-form__heading { display: flex; min-height: 78px; padding: 16px 20px; background: linear-gradient(100deg, rgb(0 120 212 / 9%), transparent 48%); border-bottom: 1px solid #263447; justify-content: space-between; gap: 24px; align-items: center; }
+.part-add-form__heading > div { display: grid; gap: 4px; }
+.part-add-form__heading .eyebrow { font-size: 0.52rem; }
+.part-add-form__heading strong { color: #e4edf6; font-size: 0.78rem; }
+.part-add-form__heading p { max-width: 420px; margin: 0; color: #718198; font-size: 0.63rem; line-height: 1.5; text-align: right; }
+.part-add-form__fields { display: grid; padding: 20px; grid-template-columns: minmax(260px, 1.45fr) minmax(100px, 0.4fr) minmax(170px, 0.72fr) minmax(180px, 0.78fr); gap: 16px; align-items: start; }
+.part-add-form__item,
+.part-add-form__quantity,
+.part-add-form__price { align-content: start; }
+.part-add-form .field > span:first-child { min-height: 16px; color: #b7c4d3; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.02em; }
+.part-add-form .field-help { color: #65768c; font-size: 0.59rem; }
+.maintenance-parts-editor .money-input { display: flex; overflow: hidden; width: 100%; background: #0d1219; border: 1px solid #344154; border-radius: var(--zion-radius-sm); align-items: stretch; transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease; }
+.maintenance-parts-editor .money-input:hover { border-color: #52647a; }
+.maintenance-parts-editor .money-input:focus-within { background: #101722; border-color: var(--zion-primary-bright); box-shadow: 0 0 0 4px rgb(0 120 212 / 14%); }
+.maintenance-parts-editor .money-input > span { display: grid; flex: 0 0 auto; min-width: 44px; min-height: 50px; margin: 0; padding: 0 10px; color: #8fa0b4; background: #151e29; border-right: 1px solid #344154; font-size: 0.66rem; font-weight: 700; place-items: center; }
+.maintenance-parts-editor .money-input > input { flex: 1 1 auto; min-width: 0; min-height: 50px; padding-left: 12px; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.maintenance-parts-editor .money-input > input:focus { background: transparent; box-shadow: none; }
+.part-add-form__footer { display: flex; min-height: 72px; padding: 12px 20px; background: #0f161f; border-top: 1px solid #263447; justify-content: space-between; gap: 20px; align-items: center; }
+.part-add-form__footer > span { color: #718198; font-size: 0.61rem; line-height: 1.45; }
+.part-add-form__footer .secondary-button { min-width: 176px; min-height: 46px; justify-content: center; }
 .parts-empty { margin: 16px 4px 4px; color: #75859a; font-size: 0.7rem; }
 .parts-plan-list { margin-top: 12px; border-top: 1px solid var(--zion-border); }
 .parts-plan-row { display: grid; min-height: 84px; padding: 13px 4px; border-bottom: 1px solid #202b3a; grid-template-columns: minmax(220px, 1.4fr) 110px minmax(130px, 0.5fr) auto; gap: 16px; align-items: center; }
@@ -2845,12 +2864,12 @@ textarea:focus-visible,
 .parts-plan-row__actions button:last-child { color: #ff9f9f; border-color: rgb(239 68 68 / 34%); }
 
 .maintenance-pricing-summary { display: grid; margin-bottom: 14px; overflow: hidden; background: #0d131b; border: 1px solid var(--zion-border); border-radius: var(--zion-radius-md); grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.maintenance-pricing-summary > div { min-height: 76px; padding: 14px 16px; border-right: 1px solid #263447; }
+.maintenance-pricing-summary > div { min-height: 82px; padding: 15px 16px; border-right: 1px solid #263447; }
 .maintenance-pricing-summary > div:last-child { border-right: 0; }
 .maintenance-pricing-summary span,
 .maintenance-pricing-summary strong { display: block; }
 .maintenance-pricing-summary span { color: #718198; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-.maintenance-pricing-summary strong { margin-top: 8px; color: #cbd8e5; font-family: 'Barlow Condensed', Impact, sans-serif; font-size: 1.2rem; }
+.maintenance-pricing-summary strong { margin-top: 9px; color: #cbd8e5; font-family: 'Barlow Condensed', Impact, sans-serif; font-size: 1.25rem; line-height: 1; }
 .maintenance-pricing-summary__total { background: rgb(0 120 212 / 10%); box-shadow: inset 3px 0 0 var(--zion-primary); }
 .maintenance-pricing-summary__total strong { color: #8fd0ff; }
 
@@ -3139,9 +3158,10 @@ textarea:focus-visible,
   .technical-record-grid { grid-template-columns: 1fr; }
   .technical-record-grid article { border-right: 0; border-bottom: 1px solid var(--zion-border); }
   .technical-record-grid article:last-child { border-bottom: 0; }
-  .part-add-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .part-add-form--priced .part-add-form__item { grid-column: 1 / -1; }
-  .part-add-form .secondary-button { grid-column: 1 / -1; }
+  .part-add-form__fields { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .part-add-form__item { grid-column: span 4; }
+  .part-add-form__quantity { grid-column: span 2; }
+  .part-add-form__price { grid-column: span 3; }
   .parts-plan-row { grid-template-columns: minmax(200px, 1fr) 100px minmax(120px, 0.5fr); }
   .parts-plan-row.parts-plan-row--priced { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .parts-plan-row--priced .parts-plan-row__identity,
@@ -3392,9 +3412,15 @@ textarea:focus-visible,
   .confirmation-actions { align-items: stretch; flex-direction: column; }
   .confirmation-actions > * { width: 100%; }
   .technical-record-grid article { min-height: 0; }
-  .part-add-form { padding: 12px; grid-template-columns: 1fr; }
-  .part-add-form--priced .part-add-form__item { grid-column: auto; }
-  .part-add-form .secondary-button { grid-column: auto; }
+  .parts-heading-total { width: 100%; padding: 11px 0 0; border-top: 1px solid #273547; border-left: 0; justify-items: start; }
+  .part-add-form__heading { padding: 16px; align-items: flex-start; flex-direction: column; gap: 8px; }
+  .part-add-form__heading p { max-width: none; text-align: left; }
+  .part-add-form__fields { padding: 16px; grid-template-columns: 1fr; }
+  .part-add-form__item,
+  .part-add-form__quantity,
+  .part-add-form__price { grid-column: auto; }
+  .part-add-form__footer { padding: 14px 16px 16px; align-items: stretch; flex-direction: column; gap: 12px; }
+  .part-add-form__footer .secondary-button { width: 100%; min-height: 48px; }
   .parts-plan-row { padding: 16px 2px; grid-template-columns: minmax(0, 1fr) 90px; }
   .parts-plan-row.parts-plan-row--priced { grid-template-columns: 1fr; }
   .parts-plan-row > :nth-child(3),

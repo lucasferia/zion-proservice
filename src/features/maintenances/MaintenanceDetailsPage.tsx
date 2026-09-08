@@ -238,7 +238,10 @@ export function MaintenanceDetailsPage() {
       <section className="maintenance-parts" aria-labelledby="maintenance-parts-title">
         <div className="section-heading">
           <div><span className="eyebrow">Consumo e precificação</span><h2 id="maintenance-parts-title">Materiais utilizados</h2></div>
-          <strong className="parts-total">{formatInventoryCurrency(chargedMaterialTotal)}</strong>
+          <div className="parts-heading-total">
+            <span>Materiais cobrados</span>
+            <strong className="parts-total">{formatInventoryCurrency(chargedMaterialTotal)}</strong>
+          </div>
         </div>
 
         <div className="maintenance-pricing-summary" aria-label="Resumo interno da precificação">

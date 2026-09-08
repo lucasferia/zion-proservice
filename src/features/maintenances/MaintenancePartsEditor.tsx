@@ -128,35 +128,52 @@ export function MaintenancePartsEditor({
   return (
     <div className="maintenance-parts-editor">
       <form className="part-add-form part-add-form--priced" onSubmit={handleAdd} noValidate>
-        <label className="field part-add-form__item">
-          <span>Item do estoque</span>
-          <select value={input.inventory_item_id} onChange={(event) => selectItem(event.target.value)} aria-invalid={Boolean(errors.inventory_item_id)}>
-            <option value="">Selecione uma peça</option>
-            {availableItems.map((item) => (
-              <option key={item.id} value={item.id}>{item.name} · saldo {formatInventoryQuantity(item.current_quantity, item.unit_of_measure)}</option>
-            ))}
-          </select>
-          {errors.inventory_item_id && <span className="field-error">{errors.inventory_item_id}</span>}
-          {selectedItem && <span className="field-help">Disponível: {formatInventoryQuantity(selectedItem.current_quantity, selectedItem.unit_of_measure)}</span>}
-        </label>
-        <label className="field">
-          <span>Quantidade</span>
-          <input type="text" inputMode="decimal" value={input.quantity} onChange={(event) => { setInput((current) => ({ ...current, quantity: event.target.value })); setErrors((current) => ({ ...current, quantity: undefined })) }} aria-invalid={Boolean(errors.quantity)} />
-          {errors.quantity && <span className="field-error">{errors.quantity}</span>}
-        </label>
-        <label className="field">
-          <span>Custo unitário pago</span>
-          <div className="money-input"><span>R$</span><input type="text" inputMode="decimal" aria-label="Custo unitário pago" value={input.unit_cost_amount} onChange={(event) => { setInput((current) => ({ ...current, unit_cost_amount: event.target.value })); setErrors((current) => ({ ...current, unit_cost_amount: undefined })) }} aria-invalid={Boolean(errors.unit_cost_amount)} /></div>
-          {errors.unit_cost_amount && <span className="field-error">{errors.unit_cost_amount}</span>}
-          <span className="field-help">Uso interno. Não aparece no relatório do cliente.</span>
-        </label>
-        <label className="field">
-          <span>Preço unitário cobrado</span>
-          <div className="money-input"><span>R$</span><input type="text" inputMode="decimal" aria-label="Preço unitário cobrado" value={input.unit_charge_amount} onChange={(event) => { setInput((current) => ({ ...current, unit_charge_amount: event.target.value })); setErrors((current) => ({ ...current, unit_charge_amount: undefined })) }} aria-invalid={Boolean(errors.unit_charge_amount)} /></div>
-          {errors.unit_charge_amount && <span className="field-error">{errors.unit_charge_amount}</span>}
-          <span className="field-help">Este é o valor exibido ao cliente.</span>
-        </label>
-        <button className="secondary-button" type="submit" disabled={pendingAction === 'add' || !availableItems.length}>{pendingAction === 'add' ? 'Adicionando…' : 'Adicionar material'}</button>
+        <header className="part-add-form__heading">
+          <div>
+            <span className="eyebrow">Novo lançamento</span>
+            <strong>Adicionar material à OS</strong>
+          </div>
+          <p>Informe a peça, a quantidade e os valores interno e cobrado.</p>
+        </header>
+
+        <div className="part-add-form__fields">
+          <label className="field part-add-form__item">
+            <span>Item do estoque</span>
+            <select value={input.inventory_item_id} onChange={(event) => selectItem(event.target.value)} aria-invalid={Boolean(errors.inventory_item_id)}>
+              <option value="">Selecione uma peça</option>
+              {availableItems.map((item) => (
+                <option key={item.id} value={item.id}>{item.name} · saldo {formatInventoryQuantity(item.current_quantity, item.unit_of_measure)}</option>
+              ))}
+            </select>
+            {errors.inventory_item_id && <span className="field-error">{errors.inventory_item_id}</span>}
+          </label>
+          <label className="field part-add-form__quantity">
+            <span>Quantidade</span>
+            <input type="text" inputMode="decimal" value={input.quantity} onChange={(event) => { setInput((current) => ({ ...current, quantity: event.target.value })); setErrors((current) => ({ ...current, quantity: undefined })) }} aria-invalid={Boolean(errors.quantity)} />
+            {errors.quantity && <span className="field-error">{errors.quantity}</span>}
+          </label>
+          <label className="field part-add-form__price">
+            <span>Custo unitário pago</span>
+            <div className="money-input"><span aria-hidden="true">R$</span><input type="text" inputMode="decimal" aria-label="Custo unitário pago" value={input.unit_cost_amount} onChange={(event) => { setInput((current) => ({ ...current, unit_cost_amount: event.target.value })); setErrors((current) => ({ ...current, unit_cost_amount: undefined })) }} aria-invalid={Boolean(errors.unit_cost_amount)} /></div>
+            {errors.unit_cost_amount && <span className="field-error">{errors.unit_cost_amount}</span>}
+            <span className="field-help">Uso interno. Não aparece no relatório.</span>
+          </label>
+          <label className="field part-add-form__price">
+            <span>Preço unitário cobrado</span>
+            <div className="money-input"><span aria-hidden="true">R$</span><input type="text" inputMode="decimal" aria-label="Preço unitário cobrado" value={input.unit_charge_amount} onChange={(event) => { setInput((current) => ({ ...current, unit_charge_amount: event.target.value })); setErrors((current) => ({ ...current, unit_charge_amount: undefined })) }} aria-invalid={Boolean(errors.unit_charge_amount)} /></div>
+            {errors.unit_charge_amount && <span className="field-error">{errors.unit_charge_amount}</span>}
+            <span className="field-help">Valor exibido ao cliente.</span>
+          </label>
+        </div>
+
+        <footer className="part-add-form__footer">
+          <span aria-live="polite">
+            {selectedItem
+              ? `Em estoque: ${formatInventoryQuantity(selectedItem.current_quantity, selectedItem.unit_of_measure)}`
+              : 'Selecione um item para consultar o saldo disponível.'}
+          </span>
+          <button className="secondary-button" type="submit" disabled={pendingAction === 'add' || !availableItems.length}>{pendingAction === 'add' ? 'Adicionando…' : 'Adicionar material'}</button>
+        </footer>
       </form>
 
       {actionError && <div className="alert alert--error" role="alert">{actionError}</div>}
