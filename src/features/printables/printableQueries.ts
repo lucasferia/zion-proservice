@@ -24,7 +24,6 @@ export function useMaintenancePrintRecord(maintenanceId: string | undefined) {
     queryKey: printableKeys.maintenance(organization.data ?? '', maintenanceId ?? ''),
     queryFn: () => getMaintenancePrintRecord(organization.data!, maintenanceId!),
     enabled: Boolean(organization.data && maintenanceId),
-    staleTime: 4 * 60 * 1000,
   })
   return { organization, record }
 }

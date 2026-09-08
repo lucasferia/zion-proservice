@@ -10,7 +10,7 @@ export function parseDecimal(value: string) {
 
 export function validateMaintenance(input: MaintenanceInput): FieldErrors<MaintenanceInput> {
   const errors: FieldErrors<MaintenanceInput> = {}
-  const amount = parseDecimal(input.total_amount)
+  const laborAmount = parseDecimal(input.labor_amount)
 
   if (!input.client_id) errors.client_id = 'Selecione um cliente.'
   if (!input.equipment_id) errors.equipment_id = 'Selecione o equipamento atendido.'
@@ -36,8 +36,8 @@ export function validateMaintenance(input: MaintenanceInput): FieldErrors<Mainte
     errors.service_performed = 'O serviço realizado deve ter no máximo 6.000 caracteres.'
   }
   if (input.notes.length > 3000) errors.notes = 'As observações devem ter no máximo 3.000 caracteres.'
-  if (!Number.isFinite(amount) || amount < 0 || amount > 999999999999.99) {
-    errors.total_amount = 'Informe um valor válido, igual ou maior que zero.'
+  if (!Number.isFinite(laborAmount) || laborAmount < 0 || laborAmount > 999999999999.99) {
+    errors.labor_amount = 'Informe um valor de mão de obra válido, igual ou maior que zero.'
   }
 
   return errors
@@ -49,12 +49,20 @@ export function validateMaintenancePart(
 ) {
   const errors: FieldErrors<MaintenancePartInput> = {}
   const quantity = parseDecimal(input.quantity)
+  const unitCost = parseDecimal(input.unit_cost_amount)
+  const unitCharge = parseDecimal(input.unit_charge_amount)
 
   if (!input.inventory_item_id) errors.inventory_item_id = 'Selecione um item do estoque.'
   if (!Number.isFinite(quantity) || quantity <= 0 || quantity > 99999999999.999) {
     errors.quantity = 'Informe uma quantidade maior que zero.'
   } else if (availableQuantity !== null && quantity > availableQuantity) {
     errors.quantity = `Saldo disponível: ${availableQuantity.toLocaleString('pt-BR', { maximumFractionDigits: 3 })}.`
+  }
+  if (!Number.isFinite(unitCost) || unitCost < 0 || unitCost > 9999999999.9999) {
+    errors.unit_cost_amount = 'Informe quanto foi pago por unidade.'
+  }
+  if (!Number.isFinite(unitCharge) || unitCharge < 0 || unitCharge > 9999999999.9999) {
+    errors.unit_charge_amount = 'Informe quanto será cobrado por unidade.'
   }
 
   return errors

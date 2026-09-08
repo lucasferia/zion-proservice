@@ -14,6 +14,7 @@ const record: MaintenancePrintRecord = {
     scheduled_at: '2026-08-31T13:00:00Z',
     next_return_date: '2026-09-30',
     total_amount: 500,
+    labor_amount: 320,
     client_id: 'client-1',
     client_name: 'Academia Horizonte',
     client_location_id: 'location-1',
@@ -39,6 +40,8 @@ const record: MaintenancePrintRecord = {
       maintenance_id: 'maintenance-1',
       inventory_item_id: 'item-1',
       quantity: 2,
+      unit_cost_amount: 40,
+      unit_charge_amount: 90,
       unit_cost_snapshot: 40,
       total_cost_snapshot: 80,
       inventory_movement_id: 'movement-1',
@@ -126,6 +129,8 @@ describe('MaintenancePrintableDocument', () => {
 
     const parts = screen.getByRole('table', { name: 'Peças registradas na ordem de serviço' })
     expect(within(parts).getByText('Correia')).toBeInTheDocument()
+    expect(within(parts).getByText('R$ 180,00')).toBeInTheDocument()
+    expect(within(parts).queryByText('R$ 80,00')).not.toBeInTheDocument()
     expect(screen.getByText('R$ 300,00')).toBeInTheDocument()
     expect(screen.getByText('Lançamento duplicado')).toBeInTheDocument()
     expect(screen.getByText('Revisar tensão da correia.')).toBeInTheDocument()

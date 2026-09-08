@@ -19,7 +19,7 @@ const options: MaintenanceFormOptions = {
 const initialValue: MaintenanceInput = {
   client_id: '', client_location_id: '', equipment_id: '', maintenance_type: 'preventive',
   status: 'draft', scheduled_at: '2026-09-02T14:00', next_return_date: datePlusDays(30),
-  diagnosis: '', service_performed: '', notes: '', responsible_technician_id: 'user-a', total_amount: '0',
+  diagnosis: '', service_performed: '', notes: '', responsible_technician_id: 'user-a', labor_amount: '0',
 }
 
 describe('MaintenanceForm', () => {

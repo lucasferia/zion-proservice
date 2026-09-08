@@ -146,10 +146,10 @@ export function MaintenanceForm({
           {errors.service_performed && <span className="field-error">{errors.service_performed}</span>}
         </div>
         <div className="field">
-          <label htmlFor="maintenance-amount">Valor total informado</label>
-          <div className="money-input"><span>R$</span><input id="maintenance-amount" inputMode="decimal" value={input.total_amount} onChange={(event) => updateField('total_amount', event.target.value)} aria-invalid={Boolean(errors.total_amount)} /></div>
-          {errors.total_amount && <span className="field-error">{errors.total_amount}</span>}
-          <span className="field-help">O recebimento é registrado separadamente na área financeira.</span>
+          <label htmlFor="maintenance-labor-amount">Valor da mão de obra</label>
+          <div className="money-input"><span>R$</span><input id="maintenance-labor-amount" inputMode="decimal" value={input.labor_amount} onChange={(event) => updateField('labor_amount', event.target.value)} aria-invalid={Boolean(errors.labor_amount)} /></div>
+          {errors.labor_amount && <span className="field-error">{errors.labor_amount}</span>}
+          <span className="field-help">O total da OS soma automaticamente a mão de obra aos materiais cobrados.</span>
         </div>
         <div className="field">
           <label htmlFor="maintenance-return-date">Data de reagendamento <span aria-hidden="true">*</span></label>

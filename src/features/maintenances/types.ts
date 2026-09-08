@@ -43,6 +43,8 @@ export type MaintenancePart = {
   maintenance_id: string
   inventory_item_id: string
   quantity: number
+  unit_cost_amount: number | null
+  unit_charge_amount: number
   unit_cost_snapshot: number | null
   total_cost_snapshot: number | null
   inventory_movement_id: string | null
@@ -56,6 +58,7 @@ export type MaintenancePart = {
 }
 
 export type MaintenanceDetails = MaintenanceSummary & {
+  labor_amount: number
   diagnosis: string | null
   service_performed: string | null
   notes: string | null
@@ -78,7 +81,7 @@ export type MaintenanceInput = {
   service_performed: string
   notes: string
   responsible_technician_id: string
-  total_amount: string
+  labor_amount: string
 }
 
 export type MaintenanceFilters = {
@@ -127,6 +130,8 @@ export type MaintenanceFormOptions = {
 export type MaintenancePartInput = {
   inventory_item_id: string
   quantity: string
+  unit_cost_amount: string
+  unit_charge_amount: string
 }
 
 export type CompletionResult = {

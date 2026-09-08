@@ -19,7 +19,7 @@ const validInput: MaintenanceInput = {
   service_performed: 'Substituição da correia',
   notes: '',
   responsible_technician_id: 'user-a',
-  total_amount: '350,50',
+  labor_amount: '350,50',
 }
 
 describe('validações de manutenção', () => {
@@ -42,13 +42,24 @@ describe('validações de manutenção', () => {
   })
 
   it('bloqueia peça acima do saldo disponível', () => {
-    expect(validateMaintenancePart({ inventory_item_id: 'item-a', quantity: '4' }, 3).quantity)
+    expect(validateMaintenancePart({ inventory_item_id: 'item-a', quantity: '4', unit_cost_amount: '40', unit_charge_amount: '65' }, 3).quantity)
       .toContain('Saldo disponível')
   })
 
   it('aceita quantidade fracionada dentro do saldo', () => {
-    expect(validateMaintenancePart({ inventory_item_id: 'item-a', quantity: '1,5' }, 3))
+    expect(validateMaintenancePart({ inventory_item_id: 'item-a', quantity: '1,5', unit_cost_amount: '40', unit_charge_amount: '65' }, 3))
       .toEqual({})
+  })
+
+  it('exige custo pago e preço cobrado válidos para o material', () => {
+    const errors = validateMaintenancePart({
+      inventory_item_id: 'item-a',
+      quantity: '1',
+      unit_cost_amount: '-1',
+      unit_charge_amount: '',
+    }, 3)
+    expect(errors.unit_cost_amount).toBeTruthy()
+    expect(errors.unit_charge_amount).toBeTruthy()
   })
 
   it('impede conclusão sem relatório ou com peça sem saldo', () => {

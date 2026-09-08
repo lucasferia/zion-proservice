@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(59);
+select plan(67);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -340,6 +340,28 @@ select lives_ok(
   'membro adiciona peça em OS aberta'
 );
 
+select has_column('public', 'maintenances', 'labor_amount', 'OS registra valor da mão de obra');
+select has_column('public', 'maintenance_parts', 'unit_cost_amount', 'material registra custo unitário pago');
+select has_column('public', 'maintenance_parts', 'unit_charge_amount', 'material registra preço unitário cobrado');
+
+select lives_ok(
+  $$ update public.maintenances
+     set labor_amount = 100
+     where id = '61500000-0000-4000-8000-000000000001' $$,
+  'membro informa valor da mão de obra em OS aberta'
+);
+select lives_ok(
+  $$ update public.maintenance_parts
+     set unit_cost_amount = 4, unit_charge_amount = 25
+     where maintenance_id = '61500000-0000-4000-8000-000000000001' $$,
+  'membro informa custo pago e preço cobrado do material'
+);
+select is(
+  (select total_amount from public.maintenances where id = '61500000-0000-4000-8000-000000000001'),
+  175.00::numeric,
+  'total da OS soma mão de obra e materiais cobrados'
+);
+
 select lives_ok(
   $$
     insert into public.maintenance_parts (
@@ -393,13 +415,18 @@ select is(
 );
 select is(
   (select unit_cost_snapshot from public.maintenance_parts where maintenance_id = '61500000-0000-4000-8000-000000000001'),
-  5.0000::numeric,
-  'conclusão congela o custo unitário vigente'
+  4.0000::numeric,
+  'conclusão congela o custo unitário pago informado'
 );
 select is(
   (select total_cost_snapshot from public.maintenance_parts where maintenance_id = '61500000-0000-4000-8000-000000000001'),
-  15.0000::numeric,
+  12.0000::numeric,
   'conclusão congela o custo total da peça'
+);
+select is(
+  (select unit_charge_amount from public.maintenance_parts where maintenance_id = '61500000-0000-4000-8000-000000000001'),
+  25.0000::numeric,
+  'conclusão preserva o preço cobrado do cliente'
 );
 select is(
   (select count(*) from public.inventory_movements
@@ -605,6 +632,12 @@ select throws_like(
      where maintenance_id = '61500000-0000-4000-8000-000000000001' $$,
   '%imutáveis%',
   'trigger protege peças concluídas contra delete administrativo'
+);
+select throws_like(
+  $$ update public.maintenance_parts set unit_charge_amount = 30
+     where maintenance_id = '61500000-0000-4000-8000-000000000001' $$,
+  '%imutáveis%',
+  'preço cobrado fica imutável após a conclusão'
 );
 select is(
   (select count(*) from pg_policies where schemaname = 'public' and tablename = 'maintenances'),

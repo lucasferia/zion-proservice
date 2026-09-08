@@ -48,7 +48,7 @@ function createInitialInput(
     responsible_technician_id: options.technicians.some((item) => item.user_id === currentUserId)
       ? currentUserId
       : options.technicians[0]?.user_id ?? '',
-    total_amount: '0',
+    labor_amount: '0',
   }
 }
 

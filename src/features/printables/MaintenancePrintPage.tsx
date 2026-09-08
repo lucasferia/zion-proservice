@@ -30,8 +30,8 @@ function issuedAt() {
 export function MaintenancePrintableDocument({ record, onPhotoSettled }: DocumentProps) {
   const { maintenance, payment_summary: summary } = record
   const receivedBalance = Math.max(0, Number(summary.maintenance_total) - Number(summary.received_total))
-  const partsCost = maintenance.parts.reduce(
-    (total, part) => total + Number(part.total_cost_snapshot ?? part.quantity * part.current_average_cost),
+  const materialsCharged = maintenance.parts.reduce(
+    (total, part) => total + Number(part.quantity * part.unit_charge_amount),
     0,
   )
   const before = record.photos.filter((photo) => photo.kind === 'before')
@@ -75,15 +75,17 @@ export function MaintenancePrintableDocument({ record, onPhotoSettled }: Documen
       </section>
 
       <section className="print-section" aria-labelledby="parts-report-title">
-        <div className="print-section__heading"><span>03</span><h2 id="parts-report-title">{partsLabel}</h2><strong>{formatInventoryCurrency(partsCost)}</strong></div>
+        <div className="print-section__heading"><span>03</span><h2 id="parts-report-title">{partsLabel}</h2><strong>{formatInventoryCurrency(materialsCharged)}</strong></div>
         {maintenance.parts.length === 0 ? <p className="print-empty">Nenhuma peça registrada nesta ordem de serviço.</p> : (
-          <div className="print-table-wrap"><table className="print-table"><caption className="sr-only">Peças registradas na ordem de serviço</caption><thead><tr><th>Item</th><th>Quantidade</th><th>Custo unitário</th><th>Total</th></tr></thead><tbody>{maintenance.parts.map((part) => <tr key={part.id}><td><strong>{part.item_name}</strong><span>{part.item_sku || 'Sem SKU'}</span></td><td>{formatInventoryQuantity(part.quantity, part.unit_of_measure)}</td><td>{part.unit_cost_snapshot === null ? 'Não congelado' : formatInventoryCurrency(Number(part.unit_cost_snapshot))}</td><td>{part.total_cost_snapshot === null ? 'Não consumido' : formatInventoryCurrency(Number(part.total_cost_snapshot))}</td></tr>)}</tbody></table></div>
+          <div className="print-table-wrap"><table className="print-table"><caption className="sr-only">Peças registradas na ordem de serviço</caption><thead><tr><th>Material</th><th>Quantidade</th><th>Valor cobrado</th></tr></thead><tbody>{maintenance.parts.map((part) => <tr key={part.id}><td><strong>{part.item_name}</strong><span>{part.item_sku || 'Sem SKU'}</span></td><td>{formatInventoryQuantity(part.quantity, part.unit_of_measure)}</td><td><strong>{formatInventoryCurrency(Number(part.quantity * part.unit_charge_amount))}</strong></td></tr>)}</tbody></table></div>
         )}
       </section>
 
       <section className="print-section" aria-labelledby="financial-report-title">
         <div className="print-section__heading"><span>04</span><h2 id="financial-report-title">Resumo financeiro</h2></div>
         <div className="print-financial-summary">
+          <div><span>Materiais</span><strong>{formatPaymentCurrency(materialsCharged)}</strong></div>
+          <div><span>Mão de obra</span><strong>{formatPaymentCurrency(Number(maintenance.labor_amount))}</strong></div>
           <div><span>Valor da OS</span><strong>{formatPaymentCurrency(Number(summary.maintenance_total))}</strong></div>
           <div><span>Total recebido</span><strong>{formatPaymentCurrency(Number(summary.received_total))}</strong></div>
           <div><span>Pendente registrado</span><strong>{formatPaymentCurrency(Number(summary.pending_total))}</strong></div>

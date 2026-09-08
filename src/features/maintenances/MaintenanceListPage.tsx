@@ -146,7 +146,7 @@ export function MaintenanceListPage() {
               </div>
               <div><strong>{maintenance.client_name}</strong><span>{maintenance.equipment_name}{maintenance.location_name ? ` · ${maintenance.location_name}` : ''}</span></div>
               <div><strong>{maintenance.technician_name}</strong><span>{maintenance.part_count} {maintenance.part_count === 1 ? 'peça' : 'peças'}</span></div>
-              <div><strong>{formatMaintenanceCurrency(maintenance.total_amount)}</strong><span>valor informado</span></div>
+              <div><strong>{formatMaintenanceCurrency(maintenance.total_amount)}</strong><span>total cobrado</span></div>
               <MaintenanceStatusBadge status={maintenance.status} />
             </Link>
           ))}

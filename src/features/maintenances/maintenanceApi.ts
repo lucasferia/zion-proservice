@@ -42,7 +42,7 @@ function normalizeMaintenance(input: MaintenanceInput) {
     service_performed: optional(input.service_performed),
     notes: optional(input.notes),
     responsible_technician_id: input.responsible_technician_id,
-    total_amount: parseDecimal(input.total_amount),
+    labor_amount: parseDecimal(input.labor_amount),
   }
 }
 
@@ -59,6 +59,7 @@ export function friendlyMaintenanceError(error: { code?: string; message?: strin
     'O item precisa estar ativo',
     'não está ativo para consumo',
     'Cliente e unidade devem corresponder',
+    'pagamentos ativos',
   ]
   const matched = safeMessages.find((fragment) => message.includes(fragment))
   if (matched) return message
@@ -120,7 +121,7 @@ export async function getMaintenanceDetails(organizationId: string, maintenanceI
       .from('maintenances')
       .select(`
         id, organization_id, work_order_number, maintenance_type, status,
-        scheduled_at, next_return_date, diagnosis, service_performed, notes, total_amount,
+        scheduled_at, next_return_date, diagnosis, service_performed, notes, total_amount, labor_amount,
         client_id, client_location_id, equipment_id, responsible_technician_id,
         cancellation_reason, cancelled_at, cancelled_by, completed_at, completed_by,
         created_at, updated_at,
@@ -135,6 +136,7 @@ export async function getMaintenanceDetails(organizationId: string, maintenanceI
       .from('maintenance_parts')
       .select(`
         id, organization_id, maintenance_id, inventory_item_id, quantity,
+        unit_cost_amount, unit_charge_amount,
         unit_cost_snapshot, total_cost_snapshot, inventory_movement_id,
         created_at, updated_at,
         inventory_items!maintenance_parts_item_organization_fk (
@@ -163,6 +165,7 @@ export async function getMaintenanceDetails(organizationId: string, maintenanceI
     service_performed: string | null
     notes: string | null
     total_amount: number
+    labor_amount: number
     client_id: string
     client_location_id: string | null
     equipment_id: string
@@ -193,6 +196,8 @@ export async function getMaintenanceDetails(organizationId: string, maintenanceI
       maintenance_id: part.maintenance_id,
       inventory_item_id: part.inventory_item_id,
       quantity: part.quantity,
+      unit_cost_amount: part.unit_cost_amount,
+      unit_charge_amount: part.unit_charge_amount,
       unit_cost_snapshot: part.unit_cost_snapshot,
       total_cost_snapshot: part.total_cost_snapshot,
       inventory_movement_id: part.inventory_movement_id,
@@ -216,6 +221,7 @@ export async function getMaintenanceDetails(organizationId: string, maintenanceI
     scheduled_at: row.scheduled_at,
     next_return_date: row.next_return_date,
     total_amount: row.total_amount,
+    labor_amount: row.labor_amount,
     client_id: row.client_id,
     client_name: row.clients.name,
     client_location_id: row.client_location_id,
@@ -254,7 +260,7 @@ export async function createMaintenance(organizationId: string, input: Maintenan
     service_performed: normalized.service_performed,
     notes: normalized.notes,
     responsible_technician_id: normalized.responsible_technician_id,
-    total_amount: normalized.total_amount,
+    labor_amount: normalized.labor_amount,
   }
   const { data, error } = await supabase
     .from('maintenances')
@@ -295,6 +301,8 @@ export async function addMaintenancePart(
     maintenance_id: maintenanceId,
     inventory_item_id: input.inventory_item_id,
     quantity: parseDecimal(input.quantity),
+    unit_cost_amount: parseDecimal(input.unit_cost_amount),
+    unit_charge_amount: parseDecimal(input.unit_charge_amount),
   })
   if (error) throw new Error(friendlyMaintenanceError(error))
 }
@@ -302,12 +310,16 @@ export async function addMaintenancePart(
 export async function updateMaintenancePart(
   organizationId: string,
   partId: string,
-  quantity: string,
+  input: MaintenancePartInput,
 ) {
   const supabase = requireClient()
   const { error } = await supabase
     .from('maintenance_parts')
-    .update({ quantity: parseDecimal(quantity) })
+    .update({
+      quantity: parseDecimal(input.quantity),
+      unit_cost_amount: parseDecimal(input.unit_cost_amount),
+      unit_charge_amount: parseDecimal(input.unit_charge_amount),
+    })
     .eq('organization_id', organizationId)
     .eq('id', partId)
   if (error) throw new Error(friendlyMaintenanceError(error))
@@ -361,6 +373,6 @@ export function maintenanceToInput(details: MaintenanceDetails): MaintenanceInpu
     service_performed: details.service_performed ?? '',
     notes: details.notes ?? '',
     responsible_technician_id: details.responsible_technician_id,
-    total_amount: String(details.total_amount),
+    labor_amount: String(details.labor_amount),
   }
 }

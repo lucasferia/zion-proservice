@@ -103,7 +103,7 @@ select lives_ok(
 );
 select is((select active_total from public.get_maintenance_payment_summary(current_setting('test.payment_org_a')::uuid, '81500000-0000-4000-8000-000000000001')), 750.00::numeric, 'resumo atualiza a soma ativa após correção');
 select throws_like(
-  $$ update public.maintenances set total_amount = 700 where id = '81500000-0000-4000-8000-000000000001' $$,
+  $$ update public.maintenances set labor_amount = 700 where id = '81500000-0000-4000-8000-000000000001' $$,
   '%abaixo dos pagamentos ativos%', 'valor da OS não pode ser reduzido abaixo dos pagamentos ativos'
 );
 select lives_ok(

@@ -12,8 +12,24 @@ type MaintenancePartsEditorProps = {
   parts: MaintenancePart[]
   inventory: MaintenanceInventoryOption[]
   onAdd: (input: MaintenancePartInput) => Promise<void>
-  onUpdate: (partId: string, quantity: string) => Promise<void>
+  onUpdate: (partId: string, input: MaintenancePartInput) => Promise<void>
   onRemove: (partId: string) => Promise<void>
+}
+
+const emptyPart: MaintenancePartInput = {
+  inventory_item_id: '',
+  quantity: '1',
+  unit_cost_amount: '',
+  unit_charge_amount: '',
+}
+
+function partToInput(part: MaintenancePart): MaintenancePartInput {
+  return {
+    inventory_item_id: part.inventory_item_id,
+    quantity: String(part.quantity),
+    unit_cost_amount: String(part.unit_cost_amount ?? part.current_average_cost),
+    unit_charge_amount: String(part.unit_charge_amount),
+  }
 }
 
 export function MaintenancePartsEditor({
@@ -23,8 +39,8 @@ export function MaintenancePartsEditor({
   onUpdate,
   onRemove,
 }: MaintenancePartsEditorProps) {
-  const [input, setInput] = useState<MaintenancePartInput>({ inventory_item_id: '', quantity: '1' })
-  const [quantities, setQuantities] = useState<Record<string, string>>(() => Object.fromEntries(parts.map((part) => [part.id, String(part.quantity)])))
+  const [input, setInput] = useState<MaintenancePartInput>(emptyPart)
+  const [drafts, setDrafts] = useState<Record<string, MaintenancePartInput>>({})
   const [errors, setErrors] = useState<FieldErrors<MaintenancePartInput>>({})
   const [actionError, setActionError] = useState<string | null>(null)
   const [pendingAction, setPendingAction] = useState<string | null>(null)
@@ -34,16 +50,31 @@ export function MaintenancePartsEditor({
   )
   const selectedItem = inventory.find((item) => item.id === input.inventory_item_id)
 
+  function selectItem(itemId: string) {
+    const item = inventory.find((option) => option.id === itemId)
+    const suggestedValue = item ? String(item.average_unit_cost) : ''
+    setInput((current) => ({
+      ...current,
+      inventory_item_id: itemId,
+      unit_cost_amount: suggestedValue,
+      unit_charge_amount: suggestedValue,
+    }))
+    setErrors({})
+  }
+
   async function handleAdd(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const nextErrors = validateMaintenancePart(input, selectedItem?.current_quantity ?? null)
     setErrors(nextErrors)
     setActionError(null)
-    if (hasValidationErrors(nextErrors)) return
+    if (hasValidationErrors(nextErrors)) {
+      event.currentTarget.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
+      return
+    }
     setPendingAction('add')
     try {
       await onAdd(input)
-      setInput({ inventory_item_id: '', quantity: '1' })
+      setInput(emptyPart)
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Não foi possível adicionar a peça.')
     } finally {
@@ -51,20 +82,30 @@ export function MaintenancePartsEditor({
     }
   }
 
+  function updateDraft(part: MaintenancePart, field: keyof MaintenancePartInput, value: string) {
+    setDrafts((current) => ({
+      ...current,
+      [part.id]: { ...(current[part.id] ?? partToInput(part)), [field]: value },
+    }))
+  }
+
   async function handleUpdate(part: MaintenancePart) {
-    const quantity = quantities[part.id] ?? String(part.quantity)
-    const nextErrors = validateMaintenancePart(
-      { inventory_item_id: part.inventory_item_id, quantity },
-      part.available_quantity,
-    )
-    if (nextErrors.quantity) {
-      setActionError(`${part.item_name}: ${nextErrors.quantity}`)
+    const draft = drafts[part.id] ?? partToInput(part)
+    const nextErrors = validateMaintenancePart(draft, part.available_quantity)
+    const firstError = Object.values(nextErrors).find(Boolean)
+    if (firstError) {
+      setActionError(`${part.item_name}: ${firstError}`)
       return
     }
     setActionError(null)
     setPendingAction(part.id)
     try {
-      await onUpdate(part.id, quantity)
+      await onUpdate(part.id, draft)
+      setDrafts((current) => {
+        const next = { ...current }
+        delete next[part.id]
+        return next
+      })
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Não foi possível atualizar a peça.')
     } finally {
@@ -86,40 +127,61 @@ export function MaintenancePartsEditor({
 
   return (
     <div className="maintenance-parts-editor">
-      <form className="part-add-form" onSubmit={handleAdd} noValidate>
-        <label className="field">
+      <form className="part-add-form part-add-form--priced" onSubmit={handleAdd} noValidate>
+        <label className="field part-add-form__item">
           <span>Item do estoque</span>
-          <select value={input.inventory_item_id} onChange={(event) => { setInput((current) => ({ ...current, inventory_item_id: event.target.value })); setErrors({}) }} aria-invalid={Boolean(errors.inventory_item_id)}>
+          <select value={input.inventory_item_id} onChange={(event) => selectItem(event.target.value)} aria-invalid={Boolean(errors.inventory_item_id)}>
             <option value="">Selecione uma peça</option>
             {availableItems.map((item) => (
               <option key={item.id} value={item.id}>{item.name} · saldo {formatInventoryQuantity(item.current_quantity, item.unit_of_measure)}</option>
             ))}
           </select>
           {errors.inventory_item_id && <span className="field-error">{errors.inventory_item_id}</span>}
+          {selectedItem && <span className="field-help">Disponível: {formatInventoryQuantity(selectedItem.current_quantity, selectedItem.unit_of_measure)}</span>}
         </label>
         <label className="field">
           <span>Quantidade</span>
           <input type="text" inputMode="decimal" value={input.quantity} onChange={(event) => { setInput((current) => ({ ...current, quantity: event.target.value })); setErrors((current) => ({ ...current, quantity: undefined })) }} aria-invalid={Boolean(errors.quantity)} />
           {errors.quantity && <span className="field-error">{errors.quantity}</span>}
-          {selectedItem && <span className="field-help">Disponível: {formatInventoryQuantity(selectedItem.current_quantity, selectedItem.unit_of_measure)} · custo atual {formatInventoryCurrency(selectedItem.average_unit_cost)}</span>}
         </label>
-        <button className="secondary-button" type="submit" disabled={pendingAction === 'add' || !availableItems.length}>{pendingAction === 'add' ? 'Adicionando…' : 'Adicionar peça'}</button>
+        <label className="field">
+          <span>Custo unitário pago</span>
+          <div className="money-input"><span>R$</span><input type="text" inputMode="decimal" aria-label="Custo unitário pago" value={input.unit_cost_amount} onChange={(event) => { setInput((current) => ({ ...current, unit_cost_amount: event.target.value })); setErrors((current) => ({ ...current, unit_cost_amount: undefined })) }} aria-invalid={Boolean(errors.unit_cost_amount)} /></div>
+          {errors.unit_cost_amount && <span className="field-error">{errors.unit_cost_amount}</span>}
+          <span className="field-help">Uso interno. Não aparece no relatório do cliente.</span>
+        </label>
+        <label className="field">
+          <span>Preço unitário cobrado</span>
+          <div className="money-input"><span>R$</span><input type="text" inputMode="decimal" aria-label="Preço unitário cobrado" value={input.unit_charge_amount} onChange={(event) => { setInput((current) => ({ ...current, unit_charge_amount: event.target.value })); setErrors((current) => ({ ...current, unit_charge_amount: undefined })) }} aria-invalid={Boolean(errors.unit_charge_amount)} /></div>
+          {errors.unit_charge_amount && <span className="field-error">{errors.unit_charge_amount}</span>}
+          <span className="field-help">Este é o valor exibido ao cliente.</span>
+        </label>
+        <button className="secondary-button" type="submit" disabled={pendingAction === 'add' || !availableItems.length}>{pendingAction === 'add' ? 'Adicionando…' : 'Adicionar material'}</button>
       </form>
 
       {actionError && <div className="alert alert--error" role="alert">{actionError}</div>}
 
       {parts.length === 0 ? (
-        <p className="parts-empty">Nenhuma peça prevista. A OS também pode ser concluída sem consumo.</p>
+        <p className="parts-empty">Nenhum material previsto. A OS também pode ser concluída somente com mão de obra.</p>
       ) : (
-        <div className="parts-plan-list">
+        <div className="parts-plan-list parts-plan-list--priced">
           {parts.map((part) => {
-            const quantity = quantities[part.id] ?? String(part.quantity)
-            const projectedCost = parseDecimal(quantity) * part.current_average_cost
+            const draft = drafts[part.id] ?? partToInput(part)
+            const quantity = parseDecimal(draft.quantity)
+            const unitCost = parseDecimal(draft.unit_cost_amount)
+            const unitCharge = parseDecimal(draft.unit_charge_amount)
+            const paidTotal = quantity * unitCost
+            const chargeTotal = quantity * unitCharge
             return (
-              <article className="parts-plan-row" key={part.id}>
-                <div><strong>{part.item_name}</strong><span>{part.item_sku || 'Sem SKU'} · saldo {formatInventoryQuantity(part.available_quantity, part.unit_of_measure)}</span></div>
-                <label><span className="sr-only">Quantidade de {part.item_name}</span><input type="text" inputMode="decimal" value={quantity} onChange={(event) => setQuantities((current) => ({ ...current, [part.id]: event.target.value }))} /></label>
-                <div><strong>{Number.isFinite(projectedCost) ? formatInventoryCurrency(projectedCost) : '—'}</strong><span>estimativa atual</span></div>
+              <article className="parts-plan-row parts-plan-row--priced" key={part.id}>
+                <div className="parts-plan-row__identity"><strong>{part.item_name}</strong><span>{part.item_sku || 'Sem SKU'} · saldo {formatInventoryQuantity(part.available_quantity, part.unit_of_measure)}</span></div>
+                <label><span>Quantidade</span><input type="text" inputMode="decimal" value={draft.quantity} onChange={(event) => updateDraft(part, 'quantity', event.target.value)} /></label>
+                <label><span>Custo unitário pago</span><div className="money-input"><span>R$</span><input type="text" inputMode="decimal" aria-label={`Custo unitário pago de ${part.item_name}`} value={draft.unit_cost_amount} onChange={(event) => updateDraft(part, 'unit_cost_amount', event.target.value)} /></div></label>
+                <label><span>Preço unitário cobrado</span><div className="money-input"><span>R$</span><input type="text" inputMode="decimal" aria-label={`Preço unitário cobrado de ${part.item_name}`} value={draft.unit_charge_amount} onChange={(event) => updateDraft(part, 'unit_charge_amount', event.target.value)} /></div></label>
+                <div className="parts-plan-row__totals">
+                  <span>Pago <strong>{Number.isFinite(paidTotal) ? formatInventoryCurrency(paidTotal) : '—'}</strong></span>
+                  <span>Cobrado <strong>{Number.isFinite(chargeTotal) ? formatInventoryCurrency(chargeTotal) : '—'}</strong></span>
+                </div>
                 <div className="parts-plan-row__actions">
                   <button type="button" onClick={() => void handleUpdate(part)} disabled={pendingAction === part.id}>Salvar</button>
                   <button type="button" onClick={() => void handleRemove(part)} disabled={pendingAction === part.id}>Remover</button>

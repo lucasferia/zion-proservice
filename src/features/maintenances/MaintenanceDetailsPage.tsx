@@ -6,6 +6,7 @@ import { equipmentKeys } from '../equipment/equipmentQueries'
 import { formatInventoryCurrency, formatInventoryQuantity } from '../inventory/formatters'
 import { inventoryKeys } from '../inventory/inventoryQueries'
 import { MaintenanceFinancialSection } from '../payments/MaintenanceFinancialSection'
+import { paymentKeys } from '../payments/paymentQueries'
 import { formatReturnDate } from '../returns/formatters'
 import { returnKeys } from '../returns/returnQueries'
 import { formatMaintenanceCurrency, formatMaintenanceDate } from './formatters'
@@ -56,17 +57,25 @@ export function MaintenanceDetailsPage() {
   const details = maintenance.data
   const open = isMaintenanceOpen(details.status)
   const completionErrors = validateCompletion(details)
-  const frozenPartsCost = details.status === 'cancelled'
-    ? 0
-    : details.parts.reduce(
-        (total, part) => total + (part.total_cost_snapshot ?? part.quantity * part.current_average_cost),
-        0,
-      )
+  const paidMaterialTotal = details.parts.reduce(
+    (total, part) => total + (part.total_cost_snapshot
+      ?? part.quantity * (part.unit_cost_amount ?? part.current_average_cost)),
+    0,
+  )
+  const chargedMaterialTotal = details.parts.reduce(
+    (total, part) => total + part.quantity * part.unit_charge_amount,
+    0,
+  )
 
   async function refreshAfterPartChange() {
-    await queryClient.invalidateQueries({
-      queryKey: maintenanceKeys.detail(organization.data!, details.id),
-    })
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: maintenanceKeys.detail(organization.data!, details.id),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: paymentKeys.maintenance(organization.data!, details.id),
+      }),
+    ])
   }
 
   async function handleComplete() {
@@ -147,8 +156,8 @@ export function MaintenanceDetailsPage() {
           <div><span className="eyebrow">Operação irreversível</span><h2 id="complete-confirm-title">Confirmar conclusão e consumo?</h2><p>Os custos serão congelados, o estoque será baixado, o retorno será criado e esta OS ficará imutável.</p></div>
           <div className="completion-checklist">
             <span>{details.parts.length} {details.parts.length === 1 ? 'item planejado' : 'itens planejados'}</span>
-            <strong>{formatInventoryCurrency(frozenPartsCost)}</strong>
-            <small>custo estimado do estoque</small>
+            <strong>{formatInventoryCurrency(details.total_amount)}</strong>
+            <small>{formatInventoryCurrency(chargedMaterialTotal)} em materiais + {formatInventoryCurrency(details.labor_amount)} de mão de obra</small>
           </div>
           {completionErrors.length > 0 && <ul className="completion-errors">{completionErrors.map((item) => <li key={item}>{item}</li>)}</ul>}
           <div className="completion-return-summary">
@@ -186,7 +195,8 @@ export function MaintenanceDetailsPage() {
             <div><dt>Técnico</dt><dd>{details.technician_name}</dd></div>
             <div><dt>Atendimento</dt><dd>{formatMaintenanceDate(details.scheduled_at)}</dd></div>
             <div><dt>Reagendamento</dt><dd>{details.next_return_date ? formatReturnDate(details.next_return_date) : 'Não informado'}</dd></div>
-            <div><dt>Valor informado</dt><dd>{formatMaintenanceCurrency(details.total_amount)}</dd></div>
+            <div><dt>Mão de obra</dt><dd>{formatMaintenanceCurrency(details.labor_amount)}</dd></div>
+            <div><dt>Total da OS</dt><dd>{formatMaintenanceCurrency(details.total_amount)}</dd></div>
             <div><dt>Peças</dt><dd>{details.part_count}</dd></div>
           </dl>
         </article>
@@ -227,8 +237,15 @@ export function MaintenanceDetailsPage() {
 
       <section className="maintenance-parts" aria-labelledby="maintenance-parts-title">
         <div className="section-heading">
-          <div><span className="eyebrow">Consumo de estoque</span><h2 id="maintenance-parts-title">Peças e insumos</h2></div>
-          <strong className="parts-total">{formatInventoryCurrency(frozenPartsCost)}</strong>
+          <div><span className="eyebrow">Consumo e precificação</span><h2 id="maintenance-parts-title">Materiais utilizados</h2></div>
+          <strong className="parts-total">{formatInventoryCurrency(chargedMaterialTotal)}</strong>
+        </div>
+
+        <div className="maintenance-pricing-summary" aria-label="Resumo interno da precificação">
+          <div><span>Custo pago</span><strong>{formatInventoryCurrency(paidMaterialTotal)}</strong></div>
+          <div><span>Cobrado em materiais</span><strong>{formatInventoryCurrency(chargedMaterialTotal)}</strong></div>
+          <div><span>Mão de obra</span><strong>{formatInventoryCurrency(details.labor_amount)}</strong></div>
+          <div className="maintenance-pricing-summary__total"><span>Total da OS</span><strong>{formatInventoryCurrency(details.total_amount)}</strong></div>
         </div>
 
         {open ? (
@@ -236,7 +253,7 @@ export function MaintenanceDetailsPage() {
             parts={details.parts}
             inventory={optionsQuery.options.data.inventory}
             onAdd={async (input) => { await addMaintenancePart(organization.data!, details.id, input); await refreshAfterPartChange() }}
-            onUpdate={async (partId, quantity) => { await updateMaintenancePart(organization.data!, partId, quantity); await refreshAfterPartChange() }}
+            onUpdate={async (partId, input) => { await updateMaintenancePart(organization.data!, partId, input); await refreshAfterPartChange() }}
             onRemove={async (partId) => { await removeMaintenancePart(organization.data!, partId); await refreshAfterPartChange() }}
           />
         ) : details.parts.length === 0 ? (
@@ -251,13 +268,13 @@ export function MaintenanceDetailsPage() {
           </div>
         ) : (
           <div className="maintenance-parts-ledger">
-            <div className="maintenance-parts-ledger__header" aria-hidden="true"><span>Item</span><span>Quantidade</span><span>Custo congelado</span><span>Total</span></div>
+            <div className="maintenance-parts-ledger__header" aria-hidden="true"><span>Item</span><span>Quantidade</span><span>Custo pago</span><span>Cobrado</span></div>
             {details.parts.map((part) => (
               <article key={part.id}>
                 <div><strong>{part.item_name}</strong><span>{part.item_sku || 'Sem SKU'}</span></div>
                 <strong>{formatInventoryQuantity(part.quantity, part.unit_of_measure)}</strong>
-                <div><strong>{formatInventoryCurrency(part.unit_cost_snapshot ?? 0)}</strong><span>por {part.unit_of_measure}</span></div>
-                <strong>{formatInventoryCurrency(part.total_cost_snapshot ?? 0)}</strong>
+                <div><strong>{formatInventoryCurrency(part.total_cost_snapshot ?? part.quantity * (part.unit_cost_amount ?? 0))}</strong><span>interno</span></div>
+                <div><strong>{formatInventoryCurrency(part.quantity * part.unit_charge_amount)}</strong><span>cliente</span></div>
               </article>
             ))}
           </div>
