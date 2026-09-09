@@ -60,6 +60,12 @@ export function friendlyMaintenanceError(error: { code?: string; message?: strin
     'não está ativo para consumo',
     'Cliente e unidade devem corresponder',
     'pagamentos ativos',
+    'Somente ordens de serviço abertas',
+    'Remova as fotos da ordem de serviço',
+    'histórico financeiro não pode ser excluída',
+    'vinculada a retorno não pode ser excluída',
+    'movimentação de estoque não pode ser excluída',
+    'não tem permissão para excluir',
   ]
   const matched = safeMessages.find((fragment) => message.includes(fragment))
   if (matched) return message
@@ -368,6 +374,16 @@ export async function cancelMaintenance(
     cancellation_reason: reason.trim(),
   })
   if (error) throw new Error(friendlyMaintenanceError(error))
+}
+
+export async function deleteMaintenance(organizationId: string, maintenanceId: string) {
+  const supabase = requireClient()
+  const { data, error } = await supabase.rpc('delete_open_maintenance', {
+    target_organization_id: organizationId,
+    target_maintenance_id: maintenanceId,
+  })
+  if (error) throw new Error(friendlyMaintenanceError(error))
+  if (!data?.[0]?.maintenance_id) throw new Error('A exclusão não retornou a confirmação da ordem de serviço.')
 }
 
 export function maintenanceToInput(details: MaintenanceDetails): MaintenanceInput {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { PageSkeleton, PageState } from '../../components/PageState'
 import { equipmentKeys } from '../equipment/equipmentQueries'
 import { formatInventoryCurrency, formatInventoryQuantity } from '../inventory/formatters'
@@ -14,6 +14,7 @@ import {
   addMaintenancePart,
   cancelMaintenance,
   completeMaintenance,
+  deleteMaintenance,
   removeMaintenancePart,
   updateMaintenancePart,
 } from './maintenanceApi'
@@ -38,8 +39,9 @@ export function MaintenanceDetailsPage() {
   const { organization, maintenance } = detailsQuery
   const queryClient = useQueryClient()
   const location = useLocation()
+  const navigate = useNavigate()
   const routedSuccess = (location.state as { success?: string } | null)?.success
-  const [confirmation, setConfirmation] = useState<'complete' | 'cancel' | null>(null)
+  const [confirmation, setConfirmation] = useState<'complete' | 'cancel' | 'delete' | null>(null)
   const [cancellationReason, setCancellationReason] = useState('')
   const [actionError, setActionError] = useState<string | null>(null)
   const [actionSuccess, setActionSuccess] = useState<string | null>(null)
@@ -120,6 +122,24 @@ export function MaintenanceDetailsPage() {
     }
   }
 
+  async function handleDelete() {
+    setIsActing(true)
+    setActionError(null)
+    try {
+      await deleteMaintenance(organization.data!, details.id)
+      await queryClient.invalidateQueries({ queryKey: maintenanceKeys.all })
+      navigate('/app/manutencoes', {
+        replace: true,
+        state: { success: `Ordem de serviço ${details.work_order_number} excluída.` },
+      })
+    } catch (deleteError) {
+      setActionError(deleteError instanceof Error ? deleteError.message : 'Não foi possível excluir a ordem de serviço.')
+      setConfirmation(null)
+    } finally {
+      setIsActing(false)
+    }
+  }
+
   return (
     <section className="maintenance-details" aria-labelledby="maintenance-order-title">
       <Link className="back-link" to="/app/manutencoes">← Voltar para manutenções</Link>
@@ -140,6 +160,7 @@ export function MaintenanceDetailsPage() {
             <Link className="secondary-button secondary-button--link" to={`/app/manutencoes/${details.id}/editar`}>Editar OS</Link>
             <button className="primary-button primary-button--compact" type="button" onClick={() => { setConfirmation('complete'); setActionError(null) }}>Concluir manutenção</button>
             <button className="danger-text-button" type="button" onClick={() => { setConfirmation('cancel'); setActionError(null) }}>Cancelar OS</button>
+            <button className="danger-text-button" type="button" onClick={() => { setConfirmation('delete'); setActionError(null) }}>Excluir OS</button>
             </>
           )}
         </div>
@@ -176,6 +197,16 @@ export function MaintenanceDetailsPage() {
           <label className="field"><span>Motivo obrigatório</span><textarea rows={3} maxLength={500} value={cancellationReason} onChange={(event) => setCancellationReason(event.target.value)} autoFocus /></label>
           <div className="confirmation-actions">
             <button className="danger-button" type="button" disabled={isActing} onClick={() => void handleCancel()}>{isActing ? 'Cancelando…' : 'Confirmar cancelamento'}</button>
+            <button className="secondary-button" type="button" disabled={isActing} onClick={() => setConfirmation(null)}>Voltar</button>
+          </div>
+        </section>
+      )}
+
+      {confirmation === 'delete' && (
+        <section className="maintenance-confirmation maintenance-confirmation--delete" role="alert" aria-labelledby="delete-confirm-title">
+          <div><span className="eyebrow">Exclusão definitiva</span><h2 id="delete-confirm-title">Excluir esta OS?</h2><p>As peças apenas planejadas serão removidas. OS com fotos, pagamentos, retornos ou movimentações de estoque são protegidas e não podem ser excluídas.</p></div>
+          <div className="confirmation-actions">
+            <button className="danger-button" type="button" disabled={isActing} onClick={() => void handleDelete()}>{isActing ? 'Excluindo…' : 'Excluir definitivamente'}</button>
             <button className="secondary-button" type="button" disabled={isActing} onClick={() => setConfirmation(null)}>Voltar</button>
           </div>
         </section>
