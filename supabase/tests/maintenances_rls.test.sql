@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(73);
+select plan(78);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -677,6 +677,18 @@ insert into public.maintenance_parts (
   '61000000-0000-4000-8000-000000000001'
 );
 
+insert into public.maintenance_photos (
+  id, organization_id, maintenance_id, kind, storage_path,
+  mime_type, file_size, sort_order, created_by
+) values (
+  '61600000-0000-4000-8000-000000000099',
+  current_setting('test.maintenance_org_a')::uuid,
+  '61500000-0000-4000-8000-000000000099', 'before',
+  current_setting('test.maintenance_org_a') || '/61500000-0000-4000-8000-000000000099/before/delete-test.jpg',
+  'image/jpeg', 1024, 0,
+  '61000000-0000-4000-8000-000000000001'
+);
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '61000000-0000-4000-8000-000000000001', true);
 
@@ -701,6 +713,11 @@ select is(
   0::bigint,
   'peças apenas planejadas são removidas na mesma transação'
 );
+select is(
+  (select count(*) from public.maintenance_photos where maintenance_id = '61500000-0000-4000-8000-000000000099'),
+  0::bigint,
+  'metadados das fotos são removidos com a OS'
+);
 select throws_like(
   $$ select * from public.delete_open_maintenance(
     current_setting('test.maintenance_org_b')::uuid,
@@ -709,13 +726,32 @@ select throws_like(
   '%permissão%',
   'RPC bloqueia exclusão cross-tenant'
 );
-select throws_like(
+select lives_ok(
   $$ select * from public.delete_open_maintenance(
     current_setting('test.maintenance_org_a')::uuid,
     '61500000-0000-4000-8000-000000000001'
   ) $$,
-  '%Somente ordens de serviço abertas%',
-  'RPC preserva OS concluída'
+  'RPC permite excluir OS concluída'
+);
+select is(
+  (select count(*) from public.maintenances where id = '61500000-0000-4000-8000-000000000001'),
+  0::bigint,
+  'OS concluída é removida definitivamente'
+);
+select is(
+  (select current_quantity from public.inventory_items where id = '61400000-0000-4000-8000-000000000001'),
+  10.000::numeric,
+  'exclusão da OS concluída devolve ao estoque a quantidade consumida'
+);
+select is(
+  (select count(*) from public.inventory_movements where maintenance_id = '61500000-0000-4000-8000-000000000001'),
+  0::bigint,
+  'movimentos de consumo da OS excluída são removidos'
+);
+select is(
+  (select count(*) from public.maintenance_parts where maintenance_id = '61500000-0000-4000-8000-000000000001'),
+  0::bigint,
+  'snapshots das peças da OS excluída são removidos'
 );
 
 select * from finish();

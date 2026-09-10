@@ -13,6 +13,7 @@ import type {
   MaintenanceTechnicianOption,
 } from './types'
 import { parseDecimal } from './validation'
+import { MAINTENANCE_PHOTO_BUCKET } from './maintenancePhotoTypes'
 
 function requireClient() {
   const client = getSupabaseClient()
@@ -383,7 +384,14 @@ export async function deleteMaintenance(organizationId: string, maintenanceId: s
     target_maintenance_id: maintenanceId,
   })
   if (error) throw new Error(friendlyMaintenanceError(error))
-  if (!data?.[0]?.maintenance_id) throw new Error('A exclusão não retornou a confirmação da ordem de serviço.')
+  const result = data?.[0] as { maintenance_id?: string; storage_paths?: string[] } | undefined
+  if (!result?.maintenance_id) throw new Error('A exclusão não retornou a confirmação da ordem de serviço.')
+
+  const storagePaths = result.storage_paths ?? []
+  if (storagePaths.length === 0) return { storageCleanupFailed: false }
+
+  const storage = await supabase.storage.from(MAINTENANCE_PHOTO_BUCKET).remove(storagePaths)
+  return { storageCleanupFailed: Boolean(storage.error) }
 }
 
 export function maintenanceToInput(details: MaintenanceDetails): MaintenanceInput {

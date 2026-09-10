@@ -126,11 +126,15 @@ export function MaintenanceDetailsPage() {
     setIsActing(true)
     setActionError(null)
     try {
-      await deleteMaintenance(organization.data!, details.id)
+      const deletion = await deleteMaintenance(organization.data!, details.id)
       await queryClient.invalidateQueries({ queryKey: maintenanceKeys.all })
       navigate('/app/manutencoes', {
         replace: true,
-        state: { success: `Ordem de serviço ${details.work_order_number} excluída.` },
+        state: {
+          success: deletion.storageCleanupFailed
+            ? `Ordem de serviço ${details.work_order_number} excluída. A limpeza de uma foto privada ficou pendente.`
+            : `Ordem de serviço ${details.work_order_number} e seus registros foram excluídos.`,
+        },
       })
     } catch (deleteError) {
       setActionError(deleteError instanceof Error ? deleteError.message : 'Não foi possível excluir a ordem de serviço.')
@@ -160,9 +164,9 @@ export function MaintenanceDetailsPage() {
             <Link className="secondary-button secondary-button--link" to={`/app/manutencoes/${details.id}/editar`}>Editar OS</Link>
             <button className="primary-button primary-button--compact" type="button" onClick={() => { setConfirmation('complete'); setActionError(null) }}>Concluir manutenção</button>
             <button className="danger-text-button" type="button" onClick={() => { setConfirmation('cancel'); setActionError(null) }}>Cancelar OS</button>
-            <button className="danger-text-button" type="button" onClick={() => { setConfirmation('delete'); setActionError(null) }}>Excluir OS</button>
             </>
           )}
+          <button className="danger-text-button" type="button" onClick={() => { setConfirmation('delete'); setActionError(null) }}>Excluir OS</button>
         </div>
       </div>
 
@@ -204,7 +208,7 @@ export function MaintenanceDetailsPage() {
 
       {confirmation === 'delete' && (
         <section className="maintenance-confirmation maintenance-confirmation--delete" role="alert" aria-labelledby="delete-confirm-title">
-          <div><span className="eyebrow">Exclusão definitiva</span><h2 id="delete-confirm-title">Excluir esta OS?</h2><p>As peças apenas planejadas serão removidas. OS com fotos, pagamentos, retornos ou movimentações de estoque são protegidas e não podem ser excluídas.</p></div>
+          <div><span className="eyebrow">Exclusão definitiva</span><h2 id="delete-confirm-title">Excluir esta OS e todo o histórico?</h2><p>Pagamentos, retorno, fotos, peças e movimentações vinculadas serão removidos. Se a OS consumiu estoque, as quantidades serão devolvidas antes da exclusão. Esta ação não pode ser desfeita.</p></div>
           <div className="confirmation-actions">
             <button className="danger-button" type="button" disabled={isActing} onClick={() => void handleDelete()}>{isActing ? 'Excluindo…' : 'Excluir definitivamente'}</button>
             <button className="secondary-button" type="button" disabled={isActing} onClick={() => setConfirmation(null)}>Voltar</button>
