@@ -2539,7 +2539,6 @@ textarea:focus-visible,
 }
 
 .maintenance-confirmation--cancel { background: linear-gradient(135deg, rgb(239 68 68 / 10%), #101720 62%); border-color: rgb(239 68 68 / 42%); box-shadow: inset 4px 0 0 var(--zion-danger); }
-.maintenance-confirmation--delete { background: linear-gradient(135deg, rgb(239 68 68 / 14%), #101720 62%); border-color: rgb(239 68 68 / 52%); box-shadow: inset 4px 0 0 var(--zion-danger); }
 .maintenance-confirmation h2 { margin: 7px 0 0; font-family: 'Barlow Condensed', Impact, sans-serif; font-size: 2rem; text-transform: uppercase; }
 .maintenance-confirmation p { margin: 8px 0 0; color: #8796aa; font-size: 0.7rem; line-height: 1.55; }
 .completion-checklist { min-width: 180px; padding: 14px 18px; background: rgb(7 12 18 / 50%); border: 1px solid #314055; border-radius: 9px; text-align: right; }

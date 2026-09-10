@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(78);
+select plan(68);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -650,108 +650,9 @@ select is(
   'maintenance_parts possui políticas mínimas'
 );
 
-insert into public.maintenances (
-  id, organization_id, client_id, client_location_id, equipment_id,
-  work_order_number, maintenance_type, status, scheduled_at,
-  responsible_technician_id, created_by, updated_by
-) values (
-  '61500000-0000-4000-8000-000000000099',
-  current_setting('test.maintenance_org_a')::uuid,
-  '61100000-0000-4000-8000-000000000001',
-  '61200000-0000-4000-8000-000000000001',
-  '61300000-0000-4000-8000-000000000001',
-  'OS-EXCLUSAO-099', 'corrective', 'draft', now(),
-  '61000000-0000-4000-8000-000000000001',
-  '61000000-0000-4000-8000-000000000001',
-  '61000000-0000-4000-8000-000000000001'
-);
-
-insert into public.maintenance_parts (
-  organization_id, maintenance_id, inventory_item_id, quantity,
-  created_by, updated_by
-) values (
-  current_setting('test.maintenance_org_a')::uuid,
-  '61500000-0000-4000-8000-000000000099',
-  '61400000-0000-4000-8000-000000000001', 1,
-  '61000000-0000-4000-8000-000000000001',
-  '61000000-0000-4000-8000-000000000001'
-);
-
-insert into public.maintenance_photos (
-  id, organization_id, maintenance_id, kind, storage_path,
-  mime_type, file_size, sort_order, created_by
-) values (
-  '61600000-0000-4000-8000-000000000099',
-  current_setting('test.maintenance_org_a')::uuid,
-  '61500000-0000-4000-8000-000000000099', 'before',
-  current_setting('test.maintenance_org_a') || '/61500000-0000-4000-8000-000000000099/before/delete-test.jpg',
-  'image/jpeg', 1024, 0,
-  '61000000-0000-4000-8000-000000000001'
-);
-
-set local role authenticated;
-select set_config('request.jwt.claim.sub', '61000000-0000-4000-8000-000000000001', true);
-
 select ok(
-  has_function_privilege('authenticated', 'public.delete_open_maintenance(uuid, uuid)', 'EXECUTE'),
-  'membro autenticado pode executar a RPC de exclusão controlada'
-);
-select lives_ok(
-  $$ select * from public.delete_open_maintenance(
-    current_setting('test.maintenance_org_a')::uuid,
-    '61500000-0000-4000-8000-000000000099'
-  ) $$,
-  'RPC exclui uma OS aberta sem histórico protegido'
-);
-select is(
-  (select count(*) from public.maintenances where id = '61500000-0000-4000-8000-000000000099'),
-  0::bigint,
-  'OS aberta deixa de existir após confirmação'
-);
-select is(
-  (select count(*) from public.maintenance_parts where maintenance_id = '61500000-0000-4000-8000-000000000099'),
-  0::bigint,
-  'peças apenas planejadas são removidas na mesma transação'
-);
-select is(
-  (select count(*) from public.maintenance_photos where maintenance_id = '61500000-0000-4000-8000-000000000099'),
-  0::bigint,
-  'metadados das fotos são removidos com a OS'
-);
-select throws_like(
-  $$ select * from public.delete_open_maintenance(
-    current_setting('test.maintenance_org_b')::uuid,
-    '62500000-0000-4000-8000-000000000001'
-  ) $$,
-  '%permissão%',
-  'RPC bloqueia exclusão cross-tenant'
-);
-select lives_ok(
-  $$ select * from public.delete_open_maintenance(
-    current_setting('test.maintenance_org_a')::uuid,
-    '61500000-0000-4000-8000-000000000001'
-  ) $$,
-  'RPC permite excluir OS concluída'
-);
-select is(
-  (select count(*) from public.maintenances where id = '61500000-0000-4000-8000-000000000001'),
-  0::bigint,
-  'OS concluída é removida definitivamente'
-);
-select is(
-  (select current_quantity from public.inventory_items where id = '61400000-0000-4000-8000-000000000001'),
-  10.000::numeric,
-  'exclusão da OS concluída devolve ao estoque a quantidade consumida'
-);
-select is(
-  (select count(*) from public.inventory_movements where maintenance_id = '61500000-0000-4000-8000-000000000001'),
-  0::bigint,
-  'movimentos de consumo da OS excluída são removidos'
-);
-select is(
-  (select count(*) from public.maintenance_parts where maintenance_id = '61500000-0000-4000-8000-000000000001'),
-  0::bigint,
-  'snapshots das peças da OS excluída são removidos'
+  not has_function_privilege('authenticated', 'public.delete_open_maintenance(uuid, uuid)', 'EXECUTE'),
+  'frontend não possui operação para excluir OS'
 );
 
 select * from finish();
