@@ -46,7 +46,7 @@ export async function getClientPrintRecord(organizationId: string, clientId: str
   if (equipmentIds.length > 0) {
     const result = await supabase
       .from('equipment')
-      .select('id, organization_id, name, category, brand, model, serial_number, asset_tag, status, notes, created_at, updated_at')
+      .select('id, organization_id, name, category, brand, model, serial_number, asset_tag, status, notes, created_at, updated_at, deleted_at')
       .eq('organization_id', organizationId)
       .in('id', equipmentIds)
       .order('name')

@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(30);
+select plan(34);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -275,6 +275,31 @@ select is(
     (select organization_id from public.clients where id = '41100000-0000-4000-8000-000000000001'),
     'Esteira Performance 01', null, null, null, null
   )), 0::bigint, 'busca não retorna equipamento arquivado'
+);
+
+select is(
+  (select count(*) from public.search_equipment_catalog(
+    (select organization_id from public.clients where id = '41100000-0000-4000-8000-000000000001'),
+    'Esteira Performance 01', null, null, 'active'
+  )), 0::bigint, 'catálogo ativo oculta equipamento arquivado'
+);
+select is(
+  (select count(*) from public.search_equipment_catalog(
+    (select organization_id from public.clients where id = '41100000-0000-4000-8000-000000000001'),
+    'Esteira Performance 01', null, null, 'archived'
+  )), 1::bigint, 'filtro arquivados recupera equipamento preservado'
+);
+select is(
+  (select count(*) from public.search_equipment_catalog(
+    (select organization_id from public.clients where id = '41100000-0000-4000-8000-000000000001'),
+    null, null, null, 'all'
+  )), 2::bigint, 'filtro todos combina equipamentos ativos e arquivados'
+);
+select is(
+  (select count(*) from public.search_equipment_catalog(
+    (select organization_id from public.clients where id = '42100000-0000-4000-8000-000000000001'),
+    null, null, null, 'all'
+  )), 0::bigint, 'catálogo não expõe equipamentos de outro tenant'
 );
 
 select is(

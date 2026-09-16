@@ -1529,7 +1529,7 @@ textarea:focus-visible,
 .equipment-filters {
   display: grid;
   padding: 16px 18px 18px;
-  grid-template-columns: repeat(4, minmax(140px, 1fr)) auto;
+  grid-template-columns: repeat(3, minmax(140px, 1fr)) auto;
   gap: 12px;
   align-items: end;
 }
@@ -1634,6 +1634,24 @@ textarea:focus-visible,
 .equipment-row:hover {
   background: rgb(0 120 212 / 7%);
 }
+
+.equipment-row--archived { opacity: .74; }
+.equipment-row--archived:hover { opacity: 1; }
+.equipment-row__statuses { display: flex; min-width: 0; gap: 6px; align-items: flex-start; flex-direction: column; }
+.equipment-archive-status {
+  display: inline-flex;
+  width: max-content;
+  min-height: 24px;
+  padding: 0 9px;
+  color: #c3ccd7;
+  background: rgb(100 116 139 / 14%);
+  border: 1px dashed rgb(148 163 184 / 42%);
+  border-radius: 999px;
+  font-size: .68rem;
+  font-weight: 700;
+  align-items: center;
+}
+.archived-record-note { margin: 0 0 24px; padding: 14px 16px; color: #c3cfdd; background: rgb(100 116 139 / 10%); border: 1px dashed #526175; border-radius: 9px; font-size: .75rem; }
 
 .equipment-directory__header--general,
 .equipment-row--general {
@@ -3287,7 +3305,8 @@ textarea:focus-visible,
     grid-column: 1;
   }
 
-  .equipment-row > .equipment-status {
+  .equipment-row > .equipment-status,
+  .equipment-row > .equipment-row__statuses {
     grid-column: 2;
     grid-row: 1 / span 2;
   }

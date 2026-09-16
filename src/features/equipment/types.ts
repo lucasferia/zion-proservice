@@ -6,6 +6,7 @@ export const EQUIPMENT_STATUSES = [
 ] as const
 
 export type EquipmentStatus = (typeof EQUIPMENT_STATUSES)[number]['value']
+export type EquipmentArchivalFilter = 'active' | 'archived' | 'all'
 
 export type EquipmentSummary = {
   id: string
@@ -22,6 +23,7 @@ export type EquipmentSummary = {
   notes: string | null
   created_at: string
   updated_at: string
+  deleted_at: string | null
   client_name: string | null
   location_name: string | null
   location_city: string | null
@@ -45,6 +47,7 @@ export type EquipmentFilters = {
   locationId?: string
   category: string
   status: EquipmentStatus | ''
+  archival: EquipmentArchivalFilter
 }
 
 export type EquipmentFormOptions = {

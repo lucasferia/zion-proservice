@@ -38,13 +38,12 @@ export async function searchEquipment(
   filters: EquipmentFilters,
 ) {
   const supabase = requireClient()
-  const { data, error } = await supabase.rpc('search_equipment', {
+  const { data, error } = await supabase.rpc('search_equipment_catalog', {
     target_organization_id: organizationId,
     search_term: search.trim() || null,
-    filter_client_id: filters.clientId || null,
-    filter_location_id: filters.locationId || null,
     filter_category: filters.category || null,
     filter_status: filters.status || null,
+    filter_archival: filters.archival,
   })
 
   if (error) throw new Error(friendlyDataError(error))
@@ -59,7 +58,6 @@ export async function getEquipmentFormOptions(
     .from('equipment')
     .select('category')
     .eq('organization_id', organizationId)
-    .is('deleted_at', null)
     .order('category')
 
   const error = categoriesResult.error
@@ -90,11 +88,11 @@ export async function getEquipmentDetails(organizationId: string, equipmentId: s
       status,
       notes,
       created_at,
-      updated_at
+      updated_at,
+      deleted_at
     `)
     .eq('organization_id', organizationId)
     .eq('id', equipmentId)
-    .is('deleted_at', null)
     .single()
 
   if (error) throw new Error(friendlyDataError(error))
@@ -112,6 +110,7 @@ export async function getEquipmentDetails(organizationId: string, equipmentId: s
     notes: string | null
     created_at: string
     updated_at: string
+    deleted_at: string | null
   }
 
   return {
@@ -129,6 +128,7 @@ export async function getEquipmentDetails(organizationId: string, equipmentId: s
     notes: row.notes,
     created_at: row.created_at,
     updated_at: row.updated_at,
+    deleted_at: row.deleted_at,
     client_name: null,
     location_name: null,
     location_city: null,

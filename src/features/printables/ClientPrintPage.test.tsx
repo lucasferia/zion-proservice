@@ -47,6 +47,7 @@ const record: ClientPrintRecord = {
     notes: null,
     created_at: '2026-08-10T12:00:00Z',
     updated_at: '2026-08-10T12:00:00Z',
+    deleted_at: null,
     client_name: 'Academia Horizonte',
     location_name: 'Unidade Centro',
     location_city: 'São Paulo',

@@ -95,6 +95,17 @@ export function EditEquipmentPage() {
   const details = detailsQuery.equipment.data
   const options = optionsQuery.options.data
 
+  if (details.deleted_at) {
+    return (
+      <PageState
+        title="Equipamento arquivado"
+        description="Equipamentos arquivados ficam disponíveis somente para consulta do histórico."
+        actionLabel="Voltar para o equipamento"
+        onAction={() => navigate(`/app/equipamentos/${details.id}`)}
+      />
+    )
+  }
+
   return (
     <section className="form-page" aria-labelledby="edit-equipment-title">
       <FormPageHeading eyebrow="Revisão do ativo" title="Editar equipamento" />

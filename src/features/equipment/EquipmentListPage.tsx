@@ -8,6 +8,7 @@ import { EQUIPMENT_STATUSES, type EquipmentFilters } from './types'
 const emptyFilters: EquipmentFilters = {
   category: '',
   status: '',
+  archival: 'active',
 }
 
 function SearchIcon() {
@@ -34,7 +35,7 @@ export function EquipmentListPage() {
   const location = useLocation()
   const success = (location.state as { success?: string } | null)?.success
 
-  const hasFilters = Boolean(search || filters.category || filters.status)
+  const hasFilters = Boolean(search || filters.category || filters.status || filters.archival !== 'active')
   const isLoading = organization.isLoading
     || (organization.isSuccess && (equipment.isLoading || options.isLoading))
   const error = organization.error ?? equipment.error ?? options.error
@@ -81,6 +82,17 @@ export function EquipmentListPage() {
         </div>
 
         <div className="equipment-filters" aria-label="Filtros de equipamentos">
+          <label>
+            <span>Cadastro</span>
+            <select
+              value={filters.archival}
+              onChange={(event) => setFilter('archival', event.target.value as EquipmentFilters['archival'])}
+            >
+              <option value="active">Ativos</option>
+              <option value="archived">Arquivados</option>
+              <option value="all">Todos</option>
+            </select>
+          </label>
           <label>
             <span>Categoria</span>
             <select value={filters.category} onChange={(event) => setFilter('category', event.target.value)}>
@@ -153,7 +165,7 @@ export function EquipmentListPage() {
           </div>
           {equipment.data?.map((item, index) => (
             <Link
-              className="equipment-row equipment-row--general"
+              className={`equipment-row equipment-row--general${item.deleted_at ? ' equipment-row--archived' : ''}`}
               to={`/app/equipamentos/${item.id}`}
               key={item.id}
               style={{ '--row-index': index } as React.CSSProperties}
@@ -169,7 +181,10 @@ export function EquipmentListPage() {
                 <strong>{item.asset_tag || 'Sem patrimônio'}</strong>
                 <span>{item.serial_number || 'Sem número de série'}</span>
               </div>
-              <EquipmentStatusBadge status={item.status} />
+              <div className="equipment-row__statuses">
+                <EquipmentStatusBadge status={item.status} />
+                {item.deleted_at && <span className="equipment-archive-status">Arquivado</span>}
+              </div>
               <span className="client-row__arrow"><ArrowIcon /></span>
             </Link>
           ))}

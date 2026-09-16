@@ -16,6 +16,7 @@ export const equipmentKeys = {
       filters.locationId,
       filters.category,
       filters.status,
+      filters.archival,
     ] as const,
   details: () => [...equipmentKeys.all, 'detail'] as const,
   detail: (organizationId: string, equipmentId: string) =>

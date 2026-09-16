@@ -39,6 +39,7 @@ export function EquipmentDetailsPage() {
   }
 
   const details = equipment.data
+  const archived = Boolean(details.deleted_at)
 
   async function handleDelete() {
     setIsArchiving(true)
@@ -70,9 +71,10 @@ export function EquipmentDetailsPage() {
             <span className="eyebrow">{details.category}</span>
             <h1 id="equipment-name">{details.name}</h1>
             <EquipmentStatusBadge status={details.status} />
+            {archived && <span className="equipment-archive-status">Arquivado</span>}
           </div>
         </div>
-        <div className="client-details__actions">
+        {!archived && <div className="client-details__actions">
           <Link className="secondary-button secondary-button--link" to={`/app/equipamentos/${details.id}/editar`}>
             Editar equipamento
           </Link>
@@ -91,7 +93,7 @@ export function EquipmentDetailsPage() {
               </button>
             </div>
           )}
-        </div>
+        </div>}
       </div>
 
       <div className="action-messages" aria-live="polite">
@@ -99,12 +101,18 @@ export function EquipmentDetailsPage() {
         {actionError && <div className="alert alert--error">{actionError}</div>}
       </div>
 
+      {archived && (
+        <div className="archived-record-note" role="status">
+          Este equipamento está arquivado e permanece disponível somente para consulta do histórico.
+        </div>
+      )}
+
       <div className="equipment-info-grid">
         <article className="info-card equipment-owner-card">
           <span className="eyebrow">Cadastro geral</span>
           <dl>
             <div><dt>Categoria</dt><dd>{details.category}</dd></div>
-            <div><dt>Status</dt><dd>Disponível para seleção nos relatórios de visita</dd></div>
+            <div><dt>Status</dt><dd>{archived ? 'Arquivado e indisponível para novas OS' : 'Disponível para seleção nos relatórios de visita'}</dd></div>
           </dl>
         </article>
 
@@ -132,9 +140,9 @@ export function EquipmentDetailsPage() {
             <span className="eyebrow">Linha do tempo técnica</span>
             <h2 id="maintenance-history-title">Histórico de manutenções</h2>
           </div>
-          <Link className="secondary-button secondary-button--link" to={`/app/manutencoes/nova?equipmentId=${details.id}`}>
+          {!archived && <Link className="secondary-button secondary-button--link" to={`/app/manutencoes/nova?equipmentId=${details.id}`}>
             Nova OS
-          </Link>
+          </Link>}
         </div>
         {maintenanceHistory.isLoading && <PageSkeleton rows={3} />}
         {maintenanceHistory.isError && (
