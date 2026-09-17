@@ -179,6 +179,20 @@ export async function archiveEquipment(organizationId: string, equipmentId: stri
   return deleteEquipment(organizationId, equipmentId)
 }
 
+export async function restoreEquipment(organizationId: string, equipmentId: string) {
+  const supabase = requireClient()
+  const { error } = await supabase
+    .from('equipment')
+    .update({ deleted_at: null })
+    .eq('organization_id', organizationId)
+    .eq('id', equipmentId)
+    .not('deleted_at', 'is', null)
+    .select('id')
+    .single()
+
+  if (error) throw new Error(friendlyDataError(error))
+}
+
 export function equipmentToInput(equipment: EquipmentDetails): EquipmentInput {
   return {
     name: equipment.name,

@@ -7,7 +7,7 @@ import { useEquipmentMaintenanceHistory } from '../maintenances/maintenanceQueri
 import { MaintenanceStatusBadge } from '../maintenances/MaintenanceStatusBadge'
 import { getMaintenanceTypeLabel } from '../maintenances/types'
 import { RelevantReturns } from '../returns/RelevantReturns'
-import { deleteEquipment } from './equipmentApi'
+import { deleteEquipment, restoreEquipment } from './equipmentApi'
 import { EquipmentStatusBadge } from './EquipmentStatusBadge'
 import { equipmentKeys, useEquipmentDetails } from './equipmentQueries'
 
@@ -19,8 +19,10 @@ export function EquipmentDetailsPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [archivePending, setArchivePending] = useState(false)
+  const [restorePending, setRestorePending] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [isArchiving, setIsArchiving] = useState(false)
+  const [isRestoring, setIsRestoring] = useState(false)
   const success = (location.state as { success?: string } | null)?.success ?? null
 
   if (organization.isLoading || equipment.isLoading) return <PageSkeleton rows={5} />
@@ -60,6 +62,27 @@ export function EquipmentDetailsPage() {
     }
   }
 
+  async function handleRestore() {
+    setIsRestoring(true)
+    setActionError(null)
+    try {
+      await restoreEquipment(organization.data!, details.id)
+      await queryClient.invalidateQueries({ queryKey: equipmentKeys.all })
+      navigate(`/app/equipamentos/${details.id}`, {
+        replace: true,
+        state: { success: 'Equipamento desarquivado com sucesso.' },
+      })
+      setRestorePending(false)
+      setIsRestoring(false)
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : 'Não foi possível desarquivar o equipamento.',
+      )
+      setRestorePending(false)
+      setIsRestoring(false)
+    }
+  }
+
   return (
     <section className="equipment-details" aria-labelledby="equipment-name">
       <Link className="back-link" to="/app/equipamentos">← Voltar para equipamentos</Link>
@@ -74,26 +97,45 @@ export function EquipmentDetailsPage() {
             {archived && <span className="equipment-archive-status">Arquivado</span>}
           </div>
         </div>
-        {!archived && <div className="client-details__actions">
-          <Link className="secondary-button secondary-button--link" to={`/app/equipamentos/${details.id}/editar`}>
-            Editar equipamento
-          </Link>
-          {!archivePending ? (
-            <button className="danger-text-button" type="button" onClick={() => setArchivePending(true)}>
-              Arquivar equipamento
+        <div className="client-details__actions">
+          {!archived && (
+            <>
+              <Link className="secondary-button secondary-button--link" to={`/app/equipamentos/${details.id}/editar`}>
+                Editar equipamento
+              </Link>
+              {!archivePending ? (
+                <button className="danger-text-button" type="button" onClick={() => setArchivePending(true)}>
+                  Arquivar equipamento
+                </button>
+              ) : (
+                <div className="archive-confirm" role="alert">
+                  <span>Arquivar equipamento? O histórico será preservado.</span>
+                  <button type="button" onClick={() => void handleDelete()} disabled={isArchiving}>
+                    {isArchiving ? 'Arquivando…' : 'Sim, arquivar'}
+                  </button>
+                  <button type="button" onClick={() => setArchivePending(false)} disabled={isArchiving}>
+                    Cancelar
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+          {archived && (!restorePending ? (
+            <button className="secondary-button equipment-restore-button" type="button" onClick={() => setRestorePending(true)}>
+              Desarquivar equipamento
             </button>
           ) : (
-            <div className="archive-confirm" role="alert">
-              <span>Arquivar equipamento? O histórico será preservado.</span>
-              <button type="button" onClick={() => void handleDelete()} disabled={isArchiving}>
-                {isArchiving ? 'Arquivando…' : 'Sim, arquivar'}
+            <div className="archive-confirm archive-confirm--restore" role="alert">
+              <span>Desarquivar este equipamento e permitir novas OS?</span>
+              <button type="button" onClick={() => void handleRestore()} disabled={isRestoring}>
+                {isRestoring ? 'Desarquivando…' : 'Sim, desarquivar'}
               </button>
-              <button type="button" onClick={() => setArchivePending(false)} disabled={isArchiving}>
+              <button type="button" onClick={() => setRestorePending(false)} disabled={isRestoring}>
                 Cancelar
               </button>
             </div>
-          )}
-        </div>}
+          ))}
+        </div>
       </div>
 
       <div className="action-messages" aria-live="polite">
@@ -103,7 +145,7 @@ export function EquipmentDetailsPage() {
 
       {archived && (
         <div className="archived-record-note" role="status">
-          Este equipamento está arquivado e permanece disponível somente para consulta do histórico.
+          Este equipamento está arquivado. O histórico permanece disponível e o cadastro pode ser desarquivado quando necessário.
         </div>
       )}
 

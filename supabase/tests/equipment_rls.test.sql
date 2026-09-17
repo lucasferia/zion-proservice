@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(34);
+select plan(38);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -300,6 +300,36 @@ select is(
     (select organization_id from public.clients where id = '42100000-0000-4000-8000-000000000001'),
     null, null, null, 'all'
   )), 0::bigint, 'catálogo não expõe equipamentos de outro tenant'
+);
+
+select set_config('request.jwt.claim.sub', '42000000-0000-4000-8000-000000000001', true);
+
+update public.equipment
+set deleted_at = null
+where name = 'Esteira Performance 01';
+
+select set_config('request.jwt.claim.sub', '41000000-0000-4000-8000-000000000001', true);
+
+select ok(
+  (select deleted_at is not null from public.equipment where name = 'Esteira Performance 01'),
+  'membro de outro tenant não desarquiva o equipamento'
+);
+
+select lives_ok(
+  $$ update public.equipment set deleted_at = null where name = 'Esteira Performance 01' $$,
+  'membro do tenant desarquiva o equipamento'
+);
+
+select ok(
+  (select deleted_at is null and deleted_by is null from public.equipment where name = 'Esteira Performance 01'),
+  'desarquivamento limpa a auditoria de soft delete'
+);
+
+select is(
+  (select count(*) from public.search_equipment_catalog(
+    (select organization_id from public.clients where id = '41100000-0000-4000-8000-000000000001'),
+    'Esteira Performance 01', null, null, 'active'
+  )), 1::bigint, 'equipamento desarquivado volta ao catálogo ativo'
 );
 
 select is(
