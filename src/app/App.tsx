@@ -84,6 +84,15 @@ const ReturnScheduleListPage = lazy(() =>
 const CreateReturnSchedulePage = lazy(() =>
   import('../features/returns/ReturnScheduleFormPage').then((module) => ({ default: module.CreateReturnSchedulePage })),
 )
+const CreateCalendarEventPage = lazy(() =>
+  import('../features/calendar-events/CalendarEventFormPage').then((module) => ({ default: module.CreateCalendarEventPage })),
+)
+const EditCalendarEventPage = lazy(() =>
+  import('../features/calendar-events/CalendarEventFormPage').then((module) => ({ default: module.EditCalendarEventPage })),
+)
+const CalendarEventDetailsPage = lazy(() =>
+  import('../features/calendar-events/CalendarEventDetailsPage').then((module) => ({ default: module.CalendarEventDetailsPage })),
+)
 const ClientPrintPage = lazy(() =>
   import('../features/printables/ClientPrintPage').then((module) => ({ default: module.ClientPrintPage })),
 )
@@ -129,6 +138,9 @@ export function App() {
           <Route path="financeiro" element={<DeferredRoute><FinancialListPage /></DeferredRoute>} />
           <Route path="agenda" element={<DeferredRoute><ReturnScheduleListPage /></DeferredRoute>} />
           <Route path="agenda/novo" element={<DeferredRoute><CreateReturnSchedulePage /></DeferredRoute>} />
+          <Route path="agenda/eventos/novo" element={<DeferredRoute><CreateCalendarEventPage /></DeferredRoute>} />
+          <Route path="agenda/eventos/:eventId" element={<DeferredRoute><CalendarEventDetailsPage /></DeferredRoute>} />
+          <Route path="agenda/eventos/:eventId/editar" element={<DeferredRoute><EditCalendarEventPage /></DeferredRoute>} />
         </Route>
       </Route>
       <Route path="/" element={<Navigate to="/app" replace />} />
