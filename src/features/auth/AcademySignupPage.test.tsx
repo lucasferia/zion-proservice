@@ -42,6 +42,12 @@ describe('AcademySignupPage', () => {
     })
   })
 
+  it('exige explicitamente a confirmação da senha vazia', () => {
+    expect(validateAcademySignup({
+      fullName: '', email: '', password: '', passwordConfirmation: '',
+    }).passwordConfirmation).toBe('Confirme sua senha.')
+  })
+
   it('envia somente os dados públicos permitidos e orienta a confirmação', async () => {
     const user = userEvent.setup()
     render(

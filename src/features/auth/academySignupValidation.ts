@@ -14,7 +14,9 @@ export function validateAcademySignup(values: AcademySignupValues) {
   if (values.password.length < 8 || !/[A-Za-zÀ-ÿ]/.test(values.password) || !/\d/.test(values.password)) {
     errors.password = 'Use ao menos 8 caracteres, incluindo uma letra e um número.'
   }
-  if (values.passwordConfirmation !== values.password) {
+  if (!values.passwordConfirmation) {
+    errors.passwordConfirmation = 'Confirme sua senha.'
+  } else if (values.passwordConfirmation !== values.password) {
     errors.passwordConfirmation = 'As senhas precisam ser idênticas.'
   }
   return errors
