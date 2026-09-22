@@ -3,22 +3,25 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(59);
 
-insert into auth.users (id, email, raw_user_meta_data)
+insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data)
 values
   (
     '51000000-0000-4000-8000-000000000001',
     'inventory-owner-a@test.local',
-    '{"full_name":"Owner Estoque A","organization_name":"Tenant Estoque A"}'::jsonb
+    '{"full_name":"Owner Estoque A"}'::jsonb,
+    '{"zion_account_type":"internal_owner","zion_organization_name":"Tenant Estoque A"}'::jsonb
   ),
   (
     '52000000-0000-4000-8000-000000000002',
     'inventory-owner-b@test.local',
-    '{"full_name":"Owner Estoque B","organization_name":"Tenant Estoque B"}'::jsonb
+    '{"full_name":"Owner Estoque B"}'::jsonb,
+    '{"zion_account_type":"internal_owner","zion_organization_name":"Tenant Estoque B"}'::jsonb
   ),
   (
     '53000000-0000-4000-8000-000000000003',
     'inventory-technician@test.local',
-    '{"full_name":"Técnico Estoque","organization_name":"Tenant Técnico Estoque"}'::jsonb
+    '{"full_name":"Técnico Estoque"}'::jsonb,
+    '{"zion_account_type":"internal_member"}'::jsonb
   );
 
 select set_config(

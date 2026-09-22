@@ -1,7 +1,10 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate, useLocation } from 'react-router-dom'
 import horizontalLogo from '../../../Imagens/Logo Horizontal.png'
+import { LoadingScreen } from '../../components/LoadingScreen'
 import { useAuth } from './auth-context'
+import { getDefaultAccessPath, isPathAllowedForContext } from './access'
+import { AccessResolutionError } from './ProtectedRoute'
 
 function ShieldIcon() {
   return (
@@ -13,13 +16,24 @@ function ShieldIcon() {
 }
 
 export function LoginPage() {
-  const { status, signIn } = useAuth()
+  const { status, accessStatus, accessContext, signIn } = useAuth()
+  const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  if (status === 'authenticated') return <Navigate to="/app" replace />
+  if (status === 'authenticated' && accessStatus === 'loading') {
+    return <LoadingScreen label="Validando seu ambiente de acesso" />
+  }
+  if (status === 'authenticated' && accessStatus === 'error') return <AccessResolutionError />
+  if (status === 'authenticated' && accessStatus === 'resolved' && accessContext) {
+    const requestedPath = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname
+    const destination = requestedPath && isPathAllowedForContext(requestedPath, accessContext.kind)
+      ? requestedPath
+      : getDefaultAccessPath(accessContext.kind)
+    return <Navigate to={destination} replace />
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -120,6 +134,10 @@ export function LoginPage() {
               <span aria-hidden="true">→</span>
             </button>
           </form>
+          <div className="login-card__signup">
+            <span>Representa uma academia?</span>
+            <Link to="/portal/cadastro">Criar acesso ao Portal da Academia</Link>
+          </div>
         </div>
       </section>
     </main>

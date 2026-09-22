@@ -20,8 +20,12 @@ describe('LoginPage', () => {
     mockedUseAuth.mockReturnValue({
       session: null,
       status: 'unauthenticated',
+      accessStatus: 'idle',
+      accessContext: null,
       signIn,
+      signUpAcademy: vi.fn(),
       signOut: vi.fn(),
+      retryAccessResolution: vi.fn(),
     })
   })
 
@@ -61,8 +65,12 @@ describe('LoginPage', () => {
     mockedUseAuth.mockReturnValue({
       session: null,
       status: 'configuration_error',
+      accessStatus: 'idle',
+      accessContext: null,
       signIn,
+      signUpAcademy: vi.fn(),
       signOut: vi.fn(),
+      retryAccessResolution: vi.fn(),
     })
 
     render(

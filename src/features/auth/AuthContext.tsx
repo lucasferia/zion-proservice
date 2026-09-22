@@ -1,14 +1,63 @@
 import type { Session } from '@supabase/supabase-js'
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { getSupabaseClient, isSupabaseConfigured } from '../../lib/supabase'
 import { getFriendlyAuthError } from './authErrors'
-import { AuthContext, type AuthContextValue, type AuthStatus } from './auth-context'
+import {
+  AuthContext,
+  type AccessContext,
+  type AccessStatus,
+  type AuthContextValue,
+  type AuthStatus,
+} from './auth-context'
+
+type AccessContextRow = {
+  access_context: AccessContext['kind']
+  blocking_reason: string | null
+}
+
+function getFriendlySignUpError(status?: number) {
+  if (status === 422) return 'Este e-mail já está cadastrado ou os dados informados são inválidos.'
+  if (status === 429) return 'Muitas tentativas. Aguarde um pouco e tente novamente.'
+  return 'Não foi possível concluir o cadastro agora. Tente novamente.'
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [status, setStatus] = useState<AuthStatus>(() =>
     isSupabaseConfigured ? 'loading' : 'configuration_error',
   )
+  const [accessStatus, setAccessStatus] = useState<AccessStatus>('idle')
+  const [accessContext, setAccessContext] = useState<AccessContext | null>(null)
+  const resolutionVersion = useRef(0)
+
+  const resolveAccess = useCallback(async (nextSession: Session | null) => {
+    const version = ++resolutionVersion.current
+    if (!nextSession) {
+      setAccessContext(null)
+      setAccessStatus('idle')
+      return
+    }
+
+    const client = getSupabaseClient()
+    if (!client) return
+    setAccessContext(null)
+    setAccessStatus('loading')
+
+    try {
+      const { data, error } = await client.rpc('resolve_access_context')
+      if (version !== resolutionVersion.current) return
+      const row = (data as AccessContextRow[] | null)?.[0]
+      if (error || !row) {
+        setAccessStatus('error')
+        return
+      }
+      setAccessContext({ kind: row.access_context, blockingReason: row.blocking_reason })
+      setAccessStatus('resolved')
+    } catch {
+      if (version !== resolutionVersion.current) return
+      setAccessStatus('error')
+    }
+  }, [])
 
   useEffect(() => {
     const client = getSupabaseClient()
@@ -31,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setSession(data.session)
         setStatus(data.session ? 'authenticated' : 'unauthenticated')
+        void resolveAccess(data.session)
       })
       .catch(() => {
         if (!mounted) return
@@ -42,18 +92,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted) return
       setSession(nextSession)
       setStatus(nextSession ? 'authenticated' : 'unauthenticated')
+      void resolveAccess(nextSession)
     })
 
     return () => {
       mounted = false
       data.subscription.unsubscribe()
     }
-  }, [])
+  }, [resolveAccess])
 
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
       status,
+      accessStatus,
+      accessContext,
       signIn: async (email, password) => {
         const client = getSupabaseClient()
         if (!client) return 'A integração com o Supabase ainda não foi configurada.'
@@ -68,12 +121,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return 'Não foi possível acessar o serviço de autenticação. Tente novamente.'
         }
       },
+      signUpAcademy: async ({ fullName, email, password }) => {
+        const client = getSupabaseClient()
+        if (!client) {
+          return {
+            error: 'A integração com o Supabase ainda não foi configurada.',
+            emailConfirmationRequired: false,
+          }
+        }
+
+        try {
+          const { data, error } = await client.auth.signUp({
+            email: email.trim().toLowerCase(),
+            password,
+            options: {
+              data: { full_name: fullName.trim() },
+              emailRedirectTo: `${window.location.origin}/auth/confirm`,
+            },
+          })
+          if (error) {
+            return { error: getFriendlySignUpError(error.status), emailConfirmationRequired: false }
+          }
+
+          const emailConfirmationRequired = !data.session
+          if (data.session) await client.auth.signOut()
+          return { error: null, emailConfirmationRequired }
+        } catch {
+          return {
+            error: 'Não foi possível acessar o serviço de autenticação. Tente novamente.',
+            emailConfirmationRequired: false,
+          }
+        }
+      },
       signOut: async () => {
         const client = getSupabaseClient()
         if (client) await client.auth.signOut()
       },
+      retryAccessResolution: async () => resolveAccess(session),
     }),
-    [session, status],
+    [accessContext, accessStatus, resolveAccess, session, status],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

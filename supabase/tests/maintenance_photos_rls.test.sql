@@ -3,11 +3,11 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(49);
 
-insert into auth.users (id, email, raw_user_meta_data)
+insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data)
 values
-  ('71000000-0000-4000-8000-000000000001', 'photo-owner-a@test.local', '{"full_name":"Owner Fotos A","organization_name":"Tenant Fotos A"}'::jsonb),
-  ('72000000-0000-4000-8000-000000000002', 'photo-owner-b@test.local', '{"full_name":"Owner Fotos B","organization_name":"Tenant Fotos B"}'::jsonb),
-  ('73000000-0000-4000-8000-000000000003', 'photo-technician@test.local', '{"full_name":"Técnico Fotos","organization_name":"Tenant Técnico Fotos"}'::jsonb);
+  ('71000000-0000-4000-8000-000000000001', 'photo-owner-a@test.local', '{"full_name":"Owner Fotos A"}'::jsonb, '{"zion_account_type":"internal_owner","zion_organization_name":"Tenant Fotos A"}'::jsonb),
+  ('72000000-0000-4000-8000-000000000002', 'photo-owner-b@test.local', '{"full_name":"Owner Fotos B"}'::jsonb, '{"zion_account_type":"internal_owner","zion_organization_name":"Tenant Fotos B"}'::jsonb),
+  ('73000000-0000-4000-8000-000000000003', 'photo-technician@test.local', '{"full_name":"Técnico Fotos"}'::jsonb, '{"zion_account_type":"internal_member"}'::jsonb);
 
 select set_config('test.photo_org_a', (select id::text from public.organizations where created_by = '71000000-0000-4000-8000-000000000001'), true);
 select set_config('test.photo_org_b', (select id::text from public.organizations where created_by = '72000000-0000-4000-8000-000000000002'), true);

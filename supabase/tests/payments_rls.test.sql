@@ -3,11 +3,11 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(54);
 
-insert into auth.users (id, email, raw_user_meta_data)
+insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data)
 values
-  ('81000000-0000-4000-8000-000000000001', 'payment-owner-a@test.local', '{"full_name":"Owner Financeiro A","organization_name":"Tenant Financeiro A"}'::jsonb),
-  ('82000000-0000-4000-8000-000000000002', 'payment-owner-b@test.local', '{"full_name":"Owner Financeiro B","organization_name":"Tenant Financeiro B"}'::jsonb),
-  ('83000000-0000-4000-8000-000000000003', 'payment-technician@test.local', '{"full_name":"Técnico Financeiro","organization_name":"Tenant Técnico Financeiro"}'::jsonb);
+  ('81000000-0000-4000-8000-000000000001', 'payment-owner-a@test.local', '{"full_name":"Owner Financeiro A"}'::jsonb, '{"zion_account_type":"internal_owner","zion_organization_name":"Tenant Financeiro A"}'::jsonb),
+  ('82000000-0000-4000-8000-000000000002', 'payment-owner-b@test.local', '{"full_name":"Owner Financeiro B"}'::jsonb, '{"zion_account_type":"internal_owner","zion_organization_name":"Tenant Financeiro B"}'::jsonb),
+  ('83000000-0000-4000-8000-000000000003', 'payment-technician@test.local', '{"full_name":"Técnico Financeiro"}'::jsonb, '{"zion_account_type":"internal_member"}'::jsonb);
 
 select set_config('test.payment_org_a', (select id::text from public.organizations where created_by = '81000000-0000-4000-8000-000000000001'), true);
 select set_config('test.payment_org_b', (select id::text from public.organizations where created_by = '82000000-0000-4000-8000-000000000002'), true);

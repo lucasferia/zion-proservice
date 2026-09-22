@@ -1,8 +1,11 @@
 import { lazy, Suspense, type ReactNode } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import { PageSkeleton } from '../components/PageState'
 import { LoginPage } from '../features/auth/LoginPage'
-import { ProtectedRoute } from '../features/auth/ProtectedRoute'
+import { AcademySignupPage } from '../features/auth/AcademySignupPage'
+import { AuthConfirmationPage, SignupConfirmationPage } from '../features/auth/EmailConfirmationPage'
+import { AccessRedirect, ProtectedRoute } from '../features/auth/ProtectedRoute'
+import { PortalBlockedPage, PortalLandingPage, PortalShell } from '../features/portal/PortalPages'
 import { AppShell } from './AppShell'
 
 const DashboardPage = lazy(() =>
@@ -108,7 +111,10 @@ export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route element={<ProtectedRoute />}>
+      <Route path="/portal/cadastro" element={<AcademySignupPage />} />
+      <Route path="/portal/cadastro/confirmar-email" element={<SignupConfirmationPage />} />
+      <Route path="/auth/confirm" element={<AuthConfirmationPage />} />
+      <Route element={<ProtectedRoute allowed={['internal_owner', 'internal_technician']} />}>
         <Route path="/app" element={<AppShell />}>
           <Route index element={<DeferredRoute><DashboardPage /></DeferredRoute>} />
           <Route path="clientes" element={<DeferredRoute><ClientListPage /></DeferredRoute>} />
@@ -143,8 +149,22 @@ export function App() {
           <Route path="agenda/eventos/:eventId/editar" element={<DeferredRoute><EditCalendarEventPage /></DeferredRoute>} />
         </Route>
       </Route>
-      <Route path="/" element={<Navigate to="/app" replace />} />
-      <Route path="*" element={<Navigate to="/app" replace />} />
+      <Route element={<ProtectedRoute allowed={['academy_active']} />}>
+        <Route path="/portal" element={<PortalShell />}>
+          <Route index element={<PortalLandingPage />} />
+        </Route>
+      </Route>
+      <Route element={<ProtectedRoute allowed={['academy_pending']} />}>
+        <Route path="/portal/aguardando" element={<PortalBlockedPage variant="pending" />} />
+      </Route>
+      <Route element={<ProtectedRoute allowed={['academy_suspended']} />}>
+        <Route path="/portal/suspenso" element={<PortalBlockedPage variant="suspended" />} />
+      </Route>
+      <Route element={<ProtectedRoute allowed={['invalid_account']} />}>
+        <Route path="/conta-sem-acesso" element={<PortalBlockedPage variant="invalid" />} />
+      </Route>
+      <Route path="/" element={<AccessRedirect />} />
+      <Route path="*" element={<AccessRedirect />} />
     </Routes>
   )
 }

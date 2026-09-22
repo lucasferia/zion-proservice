@@ -4,11 +4,11 @@ create extension if not exists pgtap with schema extensions;
 set local timezone = 'America/Sao_Paulo';
 select plan(42);
 
-insert into auth.users (id, email, raw_user_meta_data)
+insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data)
 values
-  ('a1000000-0000-4000-8000-000000000001', 'calendar-owner-a@test.local', '{"full_name":"Owner Calendar A","organization_name":"Calendar A"}'::jsonb),
-  ('a2000000-0000-4000-8000-000000000002', 'calendar-owner-b@test.local', '{"full_name":"Owner Calendar B","organization_name":"Calendar B"}'::jsonb),
-  ('a3000000-0000-4000-8000-000000000003', 'calendar-tech@test.local', '{"full_name":"Técnico Calendar"}'::jsonb);
+  ('a1000000-0000-4000-8000-000000000001', 'calendar-owner-a@test.local', '{"full_name":"Owner Calendar A"}'::jsonb, '{"zion_account_type":"internal_owner","zion_organization_name":"Calendar A"}'::jsonb),
+  ('a2000000-0000-4000-8000-000000000002', 'calendar-owner-b@test.local', '{"full_name":"Owner Calendar B"}'::jsonb, '{"zion_account_type":"internal_owner","zion_organization_name":"Calendar B"}'::jsonb),
+  ('a3000000-0000-4000-8000-000000000003', 'calendar-tech@test.local', '{"full_name":"Técnico Calendar"}'::jsonb, '{"zion_account_type":"internal_member"}'::jsonb);
 
 select set_config('test.calendar_org_a', (select id::text from public.organizations where created_by = 'a1000000-0000-4000-8000-000000000001'), true);
 select set_config('test.calendar_org_b', (select id::text from public.organizations where created_by = 'a2000000-0000-4000-8000-000000000002'), true);

@@ -37,7 +37,9 @@ O frontend nunca deve receber `service_role`, senha do banco ou qualquer chave a
 
 ## Banco, autenticação e Storage
 
-As migrations em `supabase/migrations/` criam a tenancy e todos os módulos do MVP. Cada usuário novo recebe uma organização própria e o papel `owner`; `owner` e `technician` acessam somente organizações em que possuem vínculo ativo. As tabelas de negócio e o bucket privado de fotos usam RLS, vínculos compostos e privilégios mínimos.
+As migrations em `supabase/migrations/` criam a tenancy e todos os módulos do MVP. Cadastros públicos criam somente um `profile` e um usuário externo do Portal da Academia em estado `pending`: nunca criam organização, `owner`, `technician` ou membership. Contas internas novas exigem um procedimento administrativo confiável, descrito em [docs/academy-portal-foundation.md](docs/academy-portal-foundation.md). `owner` e `technician` continuam acessando somente organizações em que possuem vínculo ativo. As tabelas de negócio e o bucket privado de fotos usam RLS, vínculos compostos e privilégios mínimos.
+
+O cadastro externo está em `/portal/cadastro`. Para testar confirmação de e-mail localmente, abra o Mailpit em `http://127.0.0.1:54324`; o callback autorizado é `/auth/confirm`.
 
 Para preparar e validar o banco local:
 
@@ -99,7 +101,8 @@ Na tela do cliente, use **Ficha imprimível**. Na tela da manutenção, use **Im
 3. No provedor do frontend, configure apenas `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` como variáveis de build.
 4. Na Vercel, use o preset **Vite**, `npm ci` como instalação, `npm run build` como build e `dist` como diretório publicado. O `vercel.json` versionado já redireciona rotas do React Router para `index.html`.
 5. Cadastre a URL pública da Vercel em **Authentication → URL Configuration** no Supabase.
-6. Execute o smoke test autenticado após o deploy.
+6. Ative **Confirm email** em **Authentication → Providers → Email** e inclua `https://SEU_DOMINIO/auth/confirm` na lista de Redirect URLs. Preserve também a URL local durante desenvolvimento.
+7. Execute o smoke test autenticado após o deploy.
 
 Antes de `db push`, revise a lista de migrations com `npx supabase migration list`. Chaves e senhas nunca devem aparecer em scripts, documentação, logs ou commits.
 

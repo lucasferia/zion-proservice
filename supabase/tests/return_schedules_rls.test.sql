@@ -4,11 +4,11 @@ create extension if not exists pgtap with schema extensions;
 set local timezone = 'America/Sao_Paulo';
 select plan(51);
 
-insert into auth.users (id, email, raw_user_meta_data)
+insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data)
 values
-  ('91000000-0000-4000-8000-000000000001', 'return-owner-a@test.local', '{"full_name":"Owner Agenda A","organization_name":"Tenant Agenda A"}'::jsonb),
-  ('92000000-0000-4000-8000-000000000002', 'return-owner-b@test.local', '{"full_name":"Owner Agenda B","organization_name":"Tenant Agenda B"}'::jsonb),
-  ('93000000-0000-4000-8000-000000000003', 'return-technician@test.local', '{"full_name":"Técnico Agenda","organization_name":"Tenant Técnico Agenda"}'::jsonb);
+  ('91000000-0000-4000-8000-000000000001', 'return-owner-a@test.local', '{"full_name":"Owner Agenda A"}'::jsonb, '{"zion_account_type":"internal_owner","zion_organization_name":"Tenant Agenda A"}'::jsonb),
+  ('92000000-0000-4000-8000-000000000002', 'return-owner-b@test.local', '{"full_name":"Owner Agenda B"}'::jsonb, '{"zion_account_type":"internal_owner","zion_organization_name":"Tenant Agenda B"}'::jsonb),
+  ('93000000-0000-4000-8000-000000000003', 'return-technician@test.local', '{"full_name":"Técnico Agenda"}'::jsonb, '{"zion_account_type":"internal_member"}'::jsonb);
 
 select set_config('test.return_org_a', (select id::text from public.organizations where created_by = '91000000-0000-4000-8000-000000000001'), true);
 select set_config('test.return_org_b', (select id::text from public.organizations where created_by = '92000000-0000-4000-8000-000000000002'), true);

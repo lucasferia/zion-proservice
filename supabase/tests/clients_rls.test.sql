@@ -3,22 +3,25 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(23);
 
-insert into auth.users (id, email, raw_user_meta_data)
+insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data)
 values
   (
     '31000000-0000-4000-8000-000000000001',
     'clients-owner-a@test.local',
-    '{"full_name":"Owner Clientes A","organization_name":"Tenant Clientes A"}'::jsonb
+    '{"full_name":"Owner Clientes A"}'::jsonb,
+    '{"zion_account_type":"internal_owner","zion_organization_name":"Tenant Clientes A"}'::jsonb
   ),
   (
     '32000000-0000-4000-8000-000000000002',
     'clients-owner-b@test.local',
-    '{"full_name":"Owner Clientes B","organization_name":"Tenant Clientes B"}'::jsonb
+    '{"full_name":"Owner Clientes B"}'::jsonb,
+    '{"zion_account_type":"internal_owner","zion_organization_name":"Tenant Clientes B"}'::jsonb
   ),
   (
     '33000000-0000-4000-8000-000000000003',
     'clients-technician@test.local',
-    '{"full_name":"Técnico Clientes","organization_name":"Tenant Técnico"}'::jsonb
+    '{"full_name":"Técnico Clientes"}'::jsonb,
+    '{"zion_account_type":"internal_member"}'::jsonb
   );
 
 set local role authenticated;

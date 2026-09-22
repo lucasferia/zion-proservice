@@ -3,17 +3,19 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(11);
 
-insert into auth.users (id, email, raw_user_meta_data)
+insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data)
 values
   (
     '10000000-0000-4000-8000-000000000001',
     'tenant-a@foundation.test',
-    '{"full_name":"Owner A","organization_name":"Organização A"}'::jsonb
+    '{"full_name":"Owner A"}'::jsonb,
+    '{"zion_account_type":"internal_owner","zion_organization_name":"Organização A"}'::jsonb
   ),
   (
     '20000000-0000-4000-8000-000000000002',
     'tenant-b@foundation.test',
-    '{"full_name":"Owner B","organization_name":"Organização B"}'::jsonb
+    '{"full_name":"Owner B"}'::jsonb,
+    '{"zion_account_type":"internal_owner","zion_organization_name":"Organização B"}'::jsonb
   );
 
 select is(
@@ -40,7 +42,7 @@ select is(
     '20000000-0000-4000-8000-000000000002'
   ) and role = 'owner' and status = 'active'),
   2::bigint,
-  'cada usuário inicia como owner ativo'
+  'cada usuário interno confiável inicia como owner ativo'
 );
 
 set local role authenticated;
@@ -95,4 +97,3 @@ select ok(
 reset role;
 select * from finish();
 rollback;
-

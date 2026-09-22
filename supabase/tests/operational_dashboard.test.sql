@@ -3,11 +3,11 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(47);
 
-insert into auth.users (id, email, raw_user_meta_data)
+insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data)
 values
-  ('a1000000-0000-4000-8000-000000000001', 'dashboard-owner-a@test.local', '{"full_name":"Owner Dashboard A","organization_name":"Tenant Dashboard A"}'::jsonb),
-  ('b1000000-0000-4000-8000-000000000002', 'dashboard-owner-b@test.local', '{"full_name":"Owner Dashboard B","organization_name":"Tenant Dashboard B"}'::jsonb),
-  ('c1000000-0000-4000-8000-000000000003', 'dashboard-empty@test.local', '{"full_name":"Owner Dashboard Vazio","organization_name":"Tenant Dashboard Vazio"}'::jsonb);
+  ('a1000000-0000-4000-8000-000000000001', 'dashboard-owner-a@test.local', '{"full_name":"Owner Dashboard A"}'::jsonb, '{"zion_account_type":"internal_owner","zion_organization_name":"Tenant Dashboard A"}'::jsonb),
+  ('b1000000-0000-4000-8000-000000000002', 'dashboard-owner-b@test.local', '{"full_name":"Owner Dashboard B"}'::jsonb, '{"zion_account_type":"internal_owner","zion_organization_name":"Tenant Dashboard B"}'::jsonb),
+  ('c1000000-0000-4000-8000-000000000003', 'dashboard-empty@test.local', '{"full_name":"Owner Dashboard Vazio"}'::jsonb, '{"zion_account_type":"internal_owner","zion_organization_name":"Tenant Dashboard Vazio"}'::jsonb);
 
 select set_config('test.dashboard_org_a', (select id::text from public.organizations where created_by = 'a1000000-0000-4000-8000-000000000001'), true);
 select set_config('test.dashboard_org_b', (select id::text from public.organizations where created_by = 'b1000000-0000-4000-8000-000000000002'), true);

@@ -3,11 +3,11 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(37);
 
-insert into auth.users (id, email, raw_user_meta_data)
+insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data)
 values
-  ('b1000000-0000-4000-8000-000000000001', 'supplier-owner-a@test.local', '{"full_name":"Owner Fornecedor A","organization_name":"Tenant Fornecedor A"}'::jsonb),
-  ('b2000000-0000-4000-8000-000000000002', 'supplier-owner-b@test.local', '{"full_name":"Owner Fornecedor B","organization_name":"Tenant Fornecedor B"}'::jsonb),
-  ('b3000000-0000-4000-8000-000000000003', 'supplier-technician@test.local', '{"full_name":"Técnico Fornecedor","organization_name":"Tenant Técnico Fornecedor"}'::jsonb);
+  ('b1000000-0000-4000-8000-000000000001', 'supplier-owner-a@test.local', '{"full_name":"Owner Fornecedor A"}'::jsonb, '{"zion_account_type":"internal_owner","zion_organization_name":"Tenant Fornecedor A"}'::jsonb),
+  ('b2000000-0000-4000-8000-000000000002', 'supplier-owner-b@test.local', '{"full_name":"Owner Fornecedor B"}'::jsonb, '{"zion_account_type":"internal_owner","zion_organization_name":"Tenant Fornecedor B"}'::jsonb),
+  ('b3000000-0000-4000-8000-000000000003', 'supplier-technician@test.local', '{"full_name":"Técnico Fornecedor"}'::jsonb, '{"zion_account_type":"internal_member"}'::jsonb);
 
 select set_config('test.supplier_org_a', (select id::text from public.organizations where created_by = 'b1000000-0000-4000-8000-000000000001'), true);
 select set_config('test.supplier_org_b', (select id::text from public.organizations where created_by = 'b2000000-0000-4000-8000-000000000002'), true);
