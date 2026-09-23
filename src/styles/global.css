@@ -374,6 +374,12 @@ textarea:focus-visible,
   outline: none;
 }
 
+.field input:focus-visible,
+.field select:focus-visible {
+  outline: 3px solid var(--zion-focus);
+  outline-offset: 3px;
+}
+
 .field select:disabled {
   cursor: not-allowed;
   opacity: 0.55;
