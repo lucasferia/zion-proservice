@@ -8,6 +8,8 @@ vi.mock('../features/auth/auth-context', async (importOriginal) => {
   const original = await importOriginal<typeof import('../features/auth/auth-context')>()
   return { ...original, useAuth: vi.fn() }
 })
+vi.mock('../features/academy-admin/AcademyPortalListPage', () => ({ AcademyPortalListPage: () => <h1>Administração das academias</h1> }))
+vi.mock('../features/dashboard/DashboardPage', () => ({ DashboardPage: () => <h1>Início interno</h1> }))
 
 const mockedUseAuth = vi.mocked(useAuth)
 
@@ -50,5 +52,16 @@ describe('App por contexto de acesso', () => {
     expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent(/Portal.*preparado\./i)
     expect(screen.queryByText('Clientes')).not.toBeInTheDocument()
     expect(screen.queryByText('Financeiro')).not.toBeInTheDocument()
+  })
+
+  it('libera a tela administrativa para owner', async () => {
+    renderContext('/app/portal-academias', 'internal_owner')
+    expect(await screen.findByRole('heading', { name: 'Administração das academias' })).toBeInTheDocument()
+  })
+
+  it('redireciona technician para o início ao abrir a administração do Portal', async () => {
+    renderContext('/app/portal-academias', 'internal_technician')
+    expect(await screen.findByRole('heading', { name: 'Início interno' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Administração das academias' })).not.toBeInTheDocument()
   })
 })

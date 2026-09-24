@@ -87,12 +87,23 @@ function AgendaIcon() {
   )
 }
 
+function AcademyPortalIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+      <path d="M4 20V8l8-4 8 4v12H4Z" />
+      <path d="M8 20v-7h8v7M9 9h6" />
+      <circle cx="18.5" cy="6.5" r="2.5" />
+    </svg>
+  )
+}
+
 function navItemClass({ isActive }: { isActive: boolean }) {
   return `primary-nav__item${isActive ? ' primary-nav__item--active' : ''}`
 }
 
 export function AppShell() {
-  const { session, signOut } = useAuth()
+  const { session, accessContext, signOut } = useAuth()
+  const isOwner = accessContext?.kind === 'internal_owner'
   const accountLabel = typeof session?.user.user_metadata.full_name === 'string'
     ? session.user.user_metadata.full_name
     : session?.user.email
@@ -141,6 +152,10 @@ export function AppShell() {
             <AgendaIcon />
             <span>Agenda</span>
           </NavLink>
+          {isOwner && <NavLink className={navItemClass} to="/app/portal-academias">
+            <AcademyPortalIcon />
+            <span>Portal das Academias</span>
+          </NavLink>}
         </nav>
 
         <div className="side-rail__account">
@@ -163,7 +178,7 @@ export function AppShell() {
         </button>
       </header>
 
-      <nav className="mobile-nav" aria-label="Navegação principal">
+      <nav className={`mobile-nav${isOwner ? ' mobile-nav--owner' : ''}`} aria-label="Navegação principal">
         <NavLink className={navItemClass} to="/app" end>
           <HomeIcon />
           <span>Início</span>
@@ -192,6 +207,10 @@ export function AppShell() {
           <AgendaIcon />
           <span>Agenda</span>
         </NavLink>
+        {isOwner && <NavLink className={navItemClass} to="/app/portal-academias">
+          <AcademyPortalIcon />
+          <span>Portal</span>
+        </NavLink>}
       </nav>
 
       <main id="main-content" className="app-content" tabIndex={-1}>

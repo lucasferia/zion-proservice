@@ -102,6 +102,12 @@ const ClientPrintPage = lazy(() =>
 const MaintenancePrintPage = lazy(() =>
   import('../features/printables/MaintenancePrintPage').then((module) => ({ default: module.MaintenancePrintPage })),
 )
+const AcademyPortalListPage = lazy(() =>
+  import('../features/academy-admin/AcademyPortalListPage').then((module) => ({ default: module.AcademyPortalListPage })),
+)
+const AcademyPortalUserPage = lazy(() =>
+  import('../features/academy-admin/AcademyPortalUserPage').then((module) => ({ default: module.AcademyPortalUserPage })),
+)
 
 function DeferredRoute({ children }: { children: ReactNode }) {
   return <Suspense fallback={<PageSkeleton rows={4} />}>{children}</Suspense>
@@ -147,6 +153,10 @@ export function App() {
           <Route path="agenda/eventos/novo" element={<DeferredRoute><CreateCalendarEventPage /></DeferredRoute>} />
           <Route path="agenda/eventos/:eventId" element={<DeferredRoute><CalendarEventDetailsPage /></DeferredRoute>} />
           <Route path="agenda/eventos/:eventId/editar" element={<DeferredRoute><EditCalendarEventPage /></DeferredRoute>} />
+          <Route element={<ProtectedRoute allowed={['internal_owner']} />}>
+            <Route path="portal-academias" element={<DeferredRoute><AcademyPortalListPage /></DeferredRoute>} />
+            <Route path="portal-academias/:userId" element={<DeferredRoute><AcademyPortalUserPage /></DeferredRoute>} />
+          </Route>
         </Route>
       </Route>
       <Route element={<ProtectedRoute allowed={['academy_active']} />}>
