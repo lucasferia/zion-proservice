@@ -17,4 +17,17 @@ describe('roteamento por contexto', () => {
     expect(isPathAllowedForContext('/app/clientes', 'academy_active')).toBe(false)
     expect(isPathAllowedForContext('/portal', 'academy_active')).toBe(true)
   })
+
+  it('separa vínculo incompleto e bloqueio comercial dos demais estados', () => {
+    expect(getDefaultAccessPath({ kind: 'academy_pending', blockingReason: 'no_active_location' })).toBe('/portal/acesso-indisponivel')
+    expect(getDefaultAccessPath({ kind: 'academy_suspended', blockingReason: 'commercial_access_blocked' })).toBe('/portal/acesso-indisponivel')
+    expect(isPathAllowedForContext('/portal/aguardando', { kind: 'academy_pending', blockingReason: 'no_active_location' })).toBe(false)
+    expect(isPathAllowedForContext('/portal/acesso-indisponivel', { kind: 'academy_pending', blockingReason: 'no_active_location' })).toBe(true)
+  })
+
+  it('restringe o usuário ativo às três rotas reais do Portal', () => {
+    expect(isPathAllowedForContext('/portal/unidades', 'academy_active')).toBe(true)
+    expect(isPathAllowedForContext('/portal/perfil', 'academy_active')).toBe(true)
+    expect(isPathAllowedForContext('/portal/rota-futura', 'academy_active')).toBe(false)
+  })
 })

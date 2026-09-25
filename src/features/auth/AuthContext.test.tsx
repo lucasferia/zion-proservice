@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './AuthContext'
 import { useAuth } from './auth-context'
+import { queryClient } from '../../lib/queryClient'
+import { getPortalUnitPreferenceKey } from '../portal/portalPreferences'
 
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
@@ -35,6 +37,7 @@ function ContextProbe() {
       <span>{auth.accessStatus}</span>
       <span>{auth.accessContext?.kind ?? 'sem-contexto'}</span>
       <button type="button" onClick={() => void auth.signUpAcademy({ fullName: 'Maria Academia', email: 'maria@example.com', password: 'Academia123' })}>Cadastrar</button>
+      <button type="button" onClick={() => void auth.signOut()}>Sair</button>
     </div>
   )
 }
@@ -46,6 +49,8 @@ describe('AuthProvider', () => {
     mocks.signUp.mockResolvedValue({ data: { session: null, user: { id: 'external-user' } }, error: null })
     mocks.signOut.mockResolvedValue({ error: null })
     mocks.rpc.mockResolvedValue({ data: [], error: null })
+    queryClient.clear()
+    window.localStorage.clear()
   })
 
   it('restaura a sessão e só resolve após consultar o contexto seguro', async () => {
@@ -79,5 +84,22 @@ describe('AuthProvider', () => {
     })
     const payload = mocks.signUp.mock.calls[0][0]
     expect(JSON.stringify(payload)).not.toMatch(/organization|owner|technician|client|location/)
+  })
+
+  it('limpa cache e preferência do Portal ao sair', async () => {
+    const user = userEvent.setup()
+    const session = { user: { id: 'external-user' } } as Session
+    mocks.getSession.mockResolvedValue({ data: { session }, error: null })
+    mocks.rpc.mockResolvedValue({ data: [{ access_context: 'academy_active', blocking_reason: null }], error: null })
+    queryClient.setQueryData(['academy-portal-context', 'external-user'], { academy: 'cache' })
+    window.localStorage.setItem(getPortalUnitPreferenceKey('external-user'), 'unit-a')
+
+    render(<AuthProvider><ContextProbe /></AuthProvider>)
+    await waitFor(() => expect(screen.getByText('academy_active')).toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: 'Sair' }))
+
+    expect(queryClient.getQueryData(['academy-portal-context', 'external-user'])).toBeUndefined()
+    expect(window.localStorage.getItem(getPortalUnitPreferenceKey('external-user'))).toBeNull()
+    expect(mocks.signOut).toHaveBeenCalled()
   })
 })

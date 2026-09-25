@@ -43,7 +43,7 @@ export function ProtectedRoute({ allowed }: { allowed?: AccessContextKind[] }) {
   }
 
   if (allowed && !allowed.includes(accessContext.kind)) {
-    return <Navigate to={getDefaultAccessPath(accessContext.kind)} replace />
+    return <Navigate to={getDefaultAccessPath(accessContext)} replace />
   }
 
   return <Outlet />
@@ -58,5 +58,5 @@ export function AccessRedirect() {
   if (status !== 'authenticated') return <Navigate to="/login" replace />
   if (accessStatus === 'error') return <AccessResolutionError />
   if (accessStatus !== 'resolved' || !accessContext) return <LoadingScreen label="Preparando seu acesso" />
-  return <Navigate to={getDefaultAccessPath(accessContext.kind)} replace />
+  return <Navigate to={getDefaultAccessPath(accessContext)} replace />
 }

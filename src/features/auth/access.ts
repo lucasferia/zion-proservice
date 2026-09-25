@@ -1,7 +1,23 @@
-import type { AccessContextKind } from './auth-context'
+import type { AccessContext, AccessContextKind } from './auth-context'
 
-export function getDefaultAccessPath(context: AccessContextKind | null) {
-  switch (context) {
+type AccessInput = AccessContextKind | AccessContext | null
+
+function normalizeAccess(context: AccessInput) {
+  return typeof context === 'string'
+    ? { kind: context, blockingReason: null }
+    : context
+}
+
+export function getDefaultAccessPath(context: AccessInput) {
+  const access = normalizeAccess(context)
+  if (access?.kind === 'academy_pending' && access.blockingReason === 'no_active_location') {
+    return '/portal/acesso-indisponivel'
+  }
+  if (access?.kind === 'academy_suspended' && access.blockingReason === 'commercial_access_blocked') {
+    return '/portal/acesso-indisponivel'
+  }
+
+  switch (access?.kind) {
     case 'internal_owner':
     case 'internal_technician':
       return '/app'
@@ -16,14 +32,16 @@ export function getDefaultAccessPath(context: AccessContextKind | null) {
   }
 }
 
-export function isPathAllowedForContext(pathname: string, context: AccessContextKind) {
-  if (context === 'internal_owner' || context === 'internal_technician') {
+export function isPathAllowedForContext(pathname: string, context: AccessContextKind | AccessContext) {
+  const access = normalizeAccess(context)
+  if (!access) return false
+  if (access.kind === 'internal_owner' || access.kind === 'internal_technician') {
     return pathname === '/app' || pathname.startsWith('/app/')
   }
-  if (context === 'academy_active') {
-    return pathname === '/portal' || pathname.startsWith('/portal/')
+  if (access.kind === 'academy_active') {
+    return ['/portal', '/portal/unidades', '/portal/perfil'].includes(pathname)
   }
-  if (context === 'academy_pending') return pathname === '/portal/aguardando'
-  if (context === 'academy_suspended') return pathname === '/portal/suspenso'
+  if (access.kind === 'academy_pending') return pathname === getDefaultAccessPath(access)
+  if (access.kind === 'academy_suspended') return pathname === getDefaultAccessPath(access)
   return pathname === '/conta-sem-acesso'
 }

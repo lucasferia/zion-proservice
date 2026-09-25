@@ -34,7 +34,7 @@ export function AuthConfirmationPage() {
     return <LoadingScreen label="Confirmando seu e-mail" />
   }
   if (status === 'authenticated' && accessStatus === 'resolved' && accessContext) {
-    return <Navigate to={getDefaultAccessPath(accessContext.kind)} replace />
+    return <Navigate to={getDefaultAccessPath(accessContext)} replace />
   }
 
   return (

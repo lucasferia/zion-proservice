@@ -29,9 +29,9 @@ export function LoginPage() {
   if (status === 'authenticated' && accessStatus === 'error') return <AccessResolutionError />
   if (status === 'authenticated' && accessStatus === 'resolved' && accessContext) {
     const requestedPath = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname
-    const destination = requestedPath && isPathAllowedForContext(requestedPath, accessContext.kind)
+    const destination = requestedPath && isPathAllowedForContext(requestedPath, accessContext)
       ? requestedPath
-      : getDefaultAccessPath(accessContext.kind)
+      : getDefaultAccessPath(accessContext)
     return <Navigate to={destination} replace />
   }
 

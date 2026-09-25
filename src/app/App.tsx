@@ -1,11 +1,19 @@
 import { lazy, Suspense, type ReactNode } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { PageSkeleton } from '../components/PageState'
 import { LoginPage } from '../features/auth/LoginPage'
 import { AcademySignupPage } from '../features/auth/AcademySignupPage'
 import { AuthConfirmationPage, SignupConfirmationPage } from '../features/auth/EmailConfirmationPage'
 import { AccessRedirect, ProtectedRoute } from '../features/auth/ProtectedRoute'
-import { PortalBlockedPage, PortalLandingPage, PortalShell } from '../features/portal/PortalPages'
+import { PortalContextProvider } from '../features/portal/PortalContext'
+import {
+  PortalBlockedPage,
+  PortalHomePage,
+  PortalProfilePage,
+  PortalShell,
+  PortalUnavailablePage,
+  PortalUnitsPage,
+} from '../features/portal/PortalPages'
 import { AppShell } from './AppShell'
 
 const DashboardPage = lazy(() =>
@@ -160,8 +168,11 @@ export function App() {
         </Route>
       </Route>
       <Route element={<ProtectedRoute allowed={['academy_active']} />}>
-        <Route path="/portal" element={<PortalShell />}>
-          <Route index element={<PortalLandingPage />} />
+        <Route path="/portal" element={<PortalContextProvider><PortalShell /></PortalContextProvider>}>
+          <Route index element={<PortalHomePage />} />
+          <Route path="unidades" element={<PortalUnitsPage />} />
+          <Route path="perfil" element={<PortalProfilePage />} />
+          <Route path="*" element={<Navigate to="/portal" replace />} />
         </Route>
       </Route>
       <Route element={<ProtectedRoute allowed={['academy_pending']} />}>
@@ -169,6 +180,9 @@ export function App() {
       </Route>
       <Route element={<ProtectedRoute allowed={['academy_suspended']} />}>
         <Route path="/portal/suspenso" element={<PortalBlockedPage variant="suspended" />} />
+      </Route>
+      <Route element={<ProtectedRoute allowed={['academy_pending', 'academy_suspended']} />}>
+        <Route path="/portal/acesso-indisponivel" element={<PortalUnavailablePage />} />
       </Route>
       <Route element={<ProtectedRoute allowed={['invalid_account']} />}>
         <Route path="/conta-sem-acesso" element={<PortalBlockedPage variant="invalid" />} />

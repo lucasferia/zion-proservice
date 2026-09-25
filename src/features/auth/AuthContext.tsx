@@ -1,6 +1,8 @@
 import type { Session } from '@supabase/supabase-js'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { queryClient } from '../../lib/queryClient'
 import { getSupabaseClient, isSupabaseConfigured } from '../../lib/supabase'
+import { clearPortalUnitPreference } from '../portal/portalPreferences'
 import { getFriendlyAuthError } from './authErrors'
 import {
   AuthContext,
@@ -29,6 +31,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessStatus, setAccessStatus] = useState<AccessStatus>('idle')
   const [accessContext, setAccessContext] = useState<AccessContext | null>(null)
   const resolutionVersion = useRef(0)
+  const currentUserId = useRef<string | null>(null)
+
+  const clearPortalState = useCallback((userId: string | null) => {
+    queryClient.removeQueries({ queryKey: ['academy-portal-context'] })
+    if (userId) clearPortalUnitPreference(userId)
+  }, [])
 
   const resolveAccess = useCallback(async (nextSession: Session | null) => {
     const version = ++resolutionVersion.current
@@ -78,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return
         }
 
+        currentUserId.current = data.session?.user.id ?? null
         setSession(data.session)
         setStatus(data.session ? 'authenticated' : 'unauthenticated')
         void resolveAccess(data.session)
@@ -90,6 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data } = client.auth.onAuthStateChange((_event, nextSession) => {
       if (!mounted) return
+      const nextUserId = nextSession?.user.id ?? null
+      if (currentUserId.current && currentUserId.current !== nextUserId) {
+        clearPortalState(currentUserId.current)
+      }
+      currentUserId.current = nextUserId
       setSession(nextSession)
       setStatus(nextSession ? 'authenticated' : 'unauthenticated')
       void resolveAccess(nextSession)
@@ -99,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false
       data.subscription.unsubscribe()
     }
-  }, [resolveAccess])
+  }, [clearPortalState, resolveAccess])
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -155,11 +169,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       signOut: async () => {
         const client = getSupabaseClient()
+        clearPortalState(session?.user.id ?? currentUserId.current)
         if (client) await client.auth.signOut()
       },
       retryAccessResolution: async () => resolveAccess(session),
     }),
-    [accessContext, accessStatus, resolveAccess, session, status],
+    [accessContext, accessStatus, clearPortalState, resolveAccess, session, status],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
