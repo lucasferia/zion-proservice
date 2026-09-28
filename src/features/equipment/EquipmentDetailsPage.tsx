@@ -140,6 +140,9 @@ export function EquipmentDetailsPage() {
 
       <div className="action-messages" aria-live="polite">
         {success && <div className="alert alert--success">{success}</div>}
+        {details.created_source === 'academy_portal' && (
+          <div className="equipment-origin-note" role="status">Cadastrado pela academia no Portal</div>
+        )}
         {actionError && <div className="alert alert--error">{actionError}</div>}
       </div>
 

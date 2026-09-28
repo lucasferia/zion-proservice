@@ -24,12 +24,15 @@ export type EquipmentSummary = {
   created_at: string
   updated_at: string
   deleted_at: string | null
+  created_source?: 'internal' | 'academy_portal'
   client_name: string | null
   location_name: string | null
   location_city: string | null
 }
 
-export type EquipmentDetails = EquipmentSummary
+export type EquipmentDetails = Omit<EquipmentSummary, 'created_source'> & {
+  created_source: 'internal' | 'academy_portal'
+}
 
 export type EquipmentInput = {
   name: string

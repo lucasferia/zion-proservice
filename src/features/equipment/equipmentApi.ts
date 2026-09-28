@@ -89,7 +89,8 @@ export async function getEquipmentDetails(organizationId: string, equipmentId: s
       notes,
       created_at,
       updated_at,
-      deleted_at
+      deleted_at,
+      created_source
     `)
     .eq('organization_id', organizationId)
     .eq('id', equipmentId)
@@ -111,6 +112,7 @@ export async function getEquipmentDetails(organizationId: string, equipmentId: s
     created_at: string
     updated_at: string
     deleted_at: string | null
+    created_source: EquipmentDetails['created_source']
   }
 
   return {
@@ -129,6 +131,7 @@ export async function getEquipmentDetails(organizationId: string, equipmentId: s
     created_at: row.created_at,
     updated_at: row.updated_at,
     deleted_at: row.deleted_at,
+    created_source: row.created_source,
     client_name: null,
     location_name: null,
     location_city: null,

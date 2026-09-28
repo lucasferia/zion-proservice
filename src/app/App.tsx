@@ -116,6 +116,15 @@ const AcademyPortalListPage = lazy(() =>
 const AcademyPortalUserPage = lazy(() =>
   import('../features/academy-admin/AcademyPortalUserPage').then((module) => ({ default: module.AcademyPortalUserPage })),
 )
+const PortalEquipmentListPage = lazy(() =>
+  import('../features/portal-equipment/PortalEquipmentPages').then((module) => ({ default: module.PortalEquipmentListPage })),
+)
+const PortalEquipmentDetailsPage = lazy(() =>
+  import('../features/portal-equipment/PortalEquipmentPages').then((module) => ({ default: module.PortalEquipmentDetailsPage })),
+)
+const CreatePortalEquipmentPage = lazy(() =>
+  import('../features/portal-equipment/PortalEquipmentPages').then((module) => ({ default: module.CreatePortalEquipmentPage })),
+)
 
 function DeferredRoute({ children }: { children: ReactNode }) {
   return <Suspense fallback={<PageSkeleton rows={4} />}>{children}</Suspense>
@@ -170,6 +179,9 @@ export function App() {
       <Route element={<ProtectedRoute allowed={['academy_active']} />}>
         <Route path="/portal" element={<PortalContextProvider><PortalShell /></PortalContextProvider>}>
           <Route index element={<PortalHomePage />} />
+          <Route path="equipamentos" element={<DeferredRoute><PortalEquipmentListPage /></DeferredRoute>} />
+          <Route path="equipamentos/novo" element={<DeferredRoute><CreatePortalEquipmentPage /></DeferredRoute>} />
+          <Route path="equipamentos/:equipmentId" element={<DeferredRoute><PortalEquipmentDetailsPage /></DeferredRoute>} />
           <Route path="unidades" element={<PortalUnitsPage />} />
           <Route path="perfil" element={<PortalProfilePage />} />
           <Route path="*" element={<Navigate to="/portal" replace />} />

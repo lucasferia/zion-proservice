@@ -118,6 +118,7 @@ describe('páginas do Portal da Academia', () => {
     renderPortal()
     expect(screen.getAllByRole('navigation', { name: 'Navegação do Portal' })).toHaveLength(2)
     expect(screen.getAllByRole('link', { name: 'Início' }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('link', { name: 'Equipamentos' }).length).toBeGreaterThan(0)
     expect(screen.queryByText('Estoque')).not.toBeInTheDocument()
     expect(screen.queryByText('Portal das Academias')).not.toBeInTheDocument()
   })
