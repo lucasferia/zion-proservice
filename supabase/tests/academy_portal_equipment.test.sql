@@ -95,10 +95,10 @@ select throws_like(
   '%Acesso aos equipamentos do Portal indisponível%',
   'UUID de unidade não autorizada é rejeitado'
 );
-select throws_like(
-  $$ select * from public.portal_get_equipment('f1110000-0000-4000-8000-000000000001', 'f2200000-0000-4000-8000-000000000001') $$,
-  '%Equipamento não encontrado nesta unidade%',
-  'UUID de equipamento cross-tenant é rejeitado'
+select is(
+  (select count(*) from public.portal_get_equipment('f1110000-0000-4000-8000-000000000001', 'f2200000-0000-4000-8000-000000000001')),
+  0::bigint,
+  'UUID de equipamento cross-tenant retorna vazio sem HTTP 500'
 );
 select set_config('test.portal_equipment_id', public.portal_create_equipment(
   'f1110000-0000-4000-8000-000000000001', 'Remo Portal', 'Cardio', 'Zion', 'R1', 'SER-P', 'PAT-P', 'Observação pública'

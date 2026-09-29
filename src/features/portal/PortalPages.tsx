@@ -5,13 +5,14 @@ import { getDefaultAccessPath } from '../auth/access'
 import { useAuth } from '../auth/auth-context'
 import { usePortalContext } from './portal-context'
 
-type PortalIconName = 'home' | 'units' | 'equipment' | 'profile' | 'switch' | 'logout'
+type PortalIconName = 'home' | 'units' | 'equipment' | 'requests' | 'profile' | 'switch' | 'logout'
 
 function PortalIcon({ name }: { name: PortalIconName }) {
   const paths: Record<PortalIconName, ReactNode> = {
     home: <><path d="M3 11.5 12 4l9 7.5" /><path d="M5.5 10.5V20h13v-9.5M9 20v-6h6v6" /></>,
     units: <><path d="M4 20V7l8-3 8 3v13" /><path d="M8 10h1m6 0h1m-8 4h1m6 0h1M3 20h18" /></>,
     equipment: <><rect x="4" y="5" width="16" height="14" rx="2" /><path d="M8 9h8M8 13h3m3 0h2M8 17h8" /></>,
+    requests: <><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /><path d="M9 4V2m6 2V2" /></>,
     profile: <><circle cx="12" cy="8" r="4" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" /></>,
     switch: <><path d="m7 7-4 4 4 4M3 11h13" /><path d="m17 3 4 4-4 4m4-4H8" /></>,
     logout: <><path d="M10 5H5v14h5M14 8l4 4-4 4m4-4H9" /></>,
@@ -22,6 +23,7 @@ function PortalIcon({ name }: { name: PortalIconName }) {
 const navigation = [
   { to: '/portal', label: 'Início', icon: 'home' as const, end: true },
   { to: '/portal/equipamentos', label: 'Equipamentos', icon: 'equipment' as const, end: false },
+  { to: '/portal/solicitacoes', label: 'Solicitações', icon: 'requests' as const, end: false },
   { to: '/portal/unidades', label: 'Unidades', icon: 'units' as const, end: false },
   { to: '/portal/perfil', label: 'Meu perfil', icon: 'profile' as const, end: false },
 ]
@@ -102,7 +104,7 @@ export function PortalHomePage() {
           <PortalStatusPill />
           <p className="eyebrow">Olá, {firstName}</p>
           <h1 id="portal-home-title">Sua academia,<br /><strong>no contexto certo.</strong></h1>
-          <p>Este é o ambiente seguro de acompanhamento da {context.academy.name}. As informações exibidas sempre respeitam a unidade selecionada e o seu vínculo atual.</p>
+          <p>Este é o ambiente seguro de acompanhamento da {context.academy.name}. Consulte equipamentos e envie solicitações sempre no contexto da unidade ativa.</p>
         </div>
         <aside className="portal-unit-ticket" aria-label="Unidade selecionada">
           <span>Unidade atual</span>
@@ -124,10 +126,10 @@ export function PortalHomePage() {
           <span className="portal-panel-index">02</span>
           <p className="eyebrow">Próximas etapas</p>
           <h2>Um canal direto com a Zion</h2>
-          <p>O parque de equipamentos da unidade já pode ser consultado e atualizado. Solicitações e histórico de atendimento serão adicionados em etapas futuras.</p>
+          <p>Consulte o parque da unidade e envie relatos de manutenção com fotos, sem gerar uma ordem de serviço automaticamente.</p>
           <ul aria-label="Recursos planejados">
             <li><span aria-hidden="true" />Cadastro seguro de equipamentos</li>
-            <li><span aria-hidden="true" />Solicitações de atendimento</li>
+            <li><span aria-hidden="true" />Solicitações de atendimento disponíveis</li>
             <li><span aria-hidden="true" />Histórico de serviços</li>
           </ul>
         </article>

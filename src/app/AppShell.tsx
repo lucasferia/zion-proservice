@@ -69,6 +69,10 @@ function MaintenanceIcon() {
   )
 }
 
+function RequestIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/><path d="M9 4V2m6 2V2"/></svg>
+}
+
 function FinancialIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
@@ -136,6 +140,10 @@ export function AppShell() {
             <MaintenanceIcon />
             <span>Manutenções</span>
           </NavLink>
+          <NavLink className={navItemClass} to="/app/solicitacoes">
+            <RequestIcon />
+            <span>Solicitações</span>
+          </NavLink>
           <NavLink className={navItemClass} to="/app/estoque">
             <InventoryIcon />
             <span>Estoque</span>
@@ -194,6 +202,10 @@ export function AppShell() {
         <NavLink className={navItemClass} to="/app/manutencoes">
           <MaintenanceIcon />
           <span>OS</span>
+        </NavLink>
+        <NavLink className={navItemClass} to="/app/solicitacoes">
+          <RequestIcon />
+          <span>Solic.</span>
         </NavLink>
         <NavLink className={navItemClass} to="/app/estoque">
           <InventoryIcon />

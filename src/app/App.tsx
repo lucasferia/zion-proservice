@@ -125,6 +125,11 @@ const PortalEquipmentDetailsPage = lazy(() =>
 const CreatePortalEquipmentPage = lazy(() =>
   import('../features/portal-equipment/PortalEquipmentPages').then((module) => ({ default: module.CreatePortalEquipmentPage })),
 )
+const PortalMaintenanceRequestListPage = lazy(() => import('../features/maintenance-requests/PortalMaintenanceRequestPages').then((module) => ({ default: module.PortalMaintenanceRequestListPage })))
+const CreatePortalMaintenanceRequestPage = lazy(() => import('../features/maintenance-requests/PortalMaintenanceRequestPages').then((module) => ({ default: module.CreatePortalMaintenanceRequestPage })))
+const PortalMaintenanceRequestDetailsPage = lazy(() => import('../features/maintenance-requests/PortalMaintenanceRequestPages').then((module) => ({ default: module.PortalMaintenanceRequestDetailsPage })))
+const InternalMaintenanceRequestListPage = lazy(() => import('../features/maintenance-requests/InternalMaintenanceRequestPages').then((module) => ({ default: module.InternalMaintenanceRequestListPage })))
+const InternalMaintenanceRequestDetailsPage = lazy(() => import('../features/maintenance-requests/InternalMaintenanceRequestPages').then((module) => ({ default: module.InternalMaintenanceRequestDetailsPage })))
 
 function DeferredRoute({ children }: { children: ReactNode }) {
   return <Suspense fallback={<PageSkeleton rows={4} />}>{children}</Suspense>
@@ -164,6 +169,8 @@ export function App() {
           <Route path="manutencoes/:maintenanceId" element={<DeferredRoute><MaintenanceDetailsPage /></DeferredRoute>} />
           <Route path="manutencoes/:maintenanceId/editar" element={<DeferredRoute><EditMaintenancePage /></DeferredRoute>} />
           <Route path="manutencoes/:maintenanceId/imprimir" element={<DeferredRoute><MaintenancePrintPage /></DeferredRoute>} />
+          <Route path="solicitacoes" element={<DeferredRoute><InternalMaintenanceRequestListPage /></DeferredRoute>} />
+          <Route path="solicitacoes/:requestId" element={<DeferredRoute><InternalMaintenanceRequestDetailsPage /></DeferredRoute>} />
           <Route path="financeiro" element={<DeferredRoute><FinancialListPage /></DeferredRoute>} />
           <Route path="agenda" element={<DeferredRoute><ReturnScheduleListPage /></DeferredRoute>} />
           <Route path="agenda/novo" element={<DeferredRoute><CreateReturnSchedulePage /></DeferredRoute>} />
@@ -182,6 +189,9 @@ export function App() {
           <Route path="equipamentos" element={<DeferredRoute><PortalEquipmentListPage /></DeferredRoute>} />
           <Route path="equipamentos/novo" element={<DeferredRoute><CreatePortalEquipmentPage /></DeferredRoute>} />
           <Route path="equipamentos/:equipmentId" element={<DeferredRoute><PortalEquipmentDetailsPage /></DeferredRoute>} />
+          <Route path="solicitacoes" element={<DeferredRoute><PortalMaintenanceRequestListPage /></DeferredRoute>} />
+          <Route path="solicitacoes/nova" element={<DeferredRoute><CreatePortalMaintenanceRequestPage /></DeferredRoute>} />
+          <Route path="solicitacoes/:requestId" element={<DeferredRoute><PortalMaintenanceRequestDetailsPage /></DeferredRoute>} />
           <Route path="unidades" element={<PortalUnitsPage />} />
           <Route path="perfil" element={<PortalProfilePage />} />
           <Route path="*" element={<Navigate to="/portal" replace />} />
