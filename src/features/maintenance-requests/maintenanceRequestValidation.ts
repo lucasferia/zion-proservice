@@ -20,3 +20,7 @@ export function criticalityLabel(value: RequestCriticality) {
 export function requestStatusLabel(value: string) {
   return ({ pending: 'Pendente', cancelled: 'Cancelada', approved: 'Aprovada', rejected: 'Rejeitada', converted: 'Convertida' } as Record<string, string>)[value] ?? value
 }
+
+export function technicalPriorityLabel(value: RequestCriticality | null | undefined) {
+  return value ? criticalityLabel(value) : 'Não classificada'
+}

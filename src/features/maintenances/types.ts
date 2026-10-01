@@ -67,6 +67,7 @@ export type MaintenanceDetails = MaintenanceSummary & {
   cancelled_by: string | null
   completed_by: string | null
   parts: MaintenancePart[]
+  request_origin?: { maintenance_request_id: string; title: string; description: string } | null
 }
 
 export type MaintenanceInput = {

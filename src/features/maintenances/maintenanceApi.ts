@@ -14,6 +14,7 @@ import type {
 } from './types'
 import { parseDecimal } from './validation'
 import { MAINTENANCE_PHOTO_BUCKET } from './maintenancePhotoTypes'
+import { getMaintenanceRequestOrigin } from '../maintenance-requests/maintenanceRequestApi'
 
 function requireClient() {
   const client = getSupabaseClient()
@@ -123,7 +124,7 @@ export async function getMaintenanceFormOptions(
 
 export async function getMaintenanceDetails(organizationId: string, maintenanceId: string) {
   const supabase = requireClient()
-  const [maintenanceResult, partsResult, techniciansResult] = await Promise.all([
+  const [maintenanceResult, partsResult, techniciansResult, originResult] = await Promise.all([
     supabase
       .from('maintenances')
       .select(`
@@ -154,6 +155,7 @@ export async function getMaintenanceDetails(organizationId: string, maintenanceI
       .eq('maintenance_id', maintenanceId)
       .order('created_at'),
     supabase.rpc('get_organization_technicians', { target_organization_id: organizationId }),
+    getMaintenanceRequestOrigin(organizationId, maintenanceId),
   ])
 
   const error = maintenanceResult.error ?? partsResult.error ?? techniciansResult.error
@@ -250,6 +252,7 @@ export async function getMaintenanceDetails(organizationId: string, maintenanceI
     cancelled_by: row.cancelled_by,
     completed_by: row.completed_by,
     parts,
+    request_origin: originResult,
   } satisfies MaintenanceDetails
 }
 

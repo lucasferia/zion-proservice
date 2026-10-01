@@ -174,7 +174,7 @@ export function MaintenanceDetailsPage() {
             <button className="danger-text-button" type="button" onClick={() => { setConfirmation('cancel'); setActionError(null) }}>Cancelar OS</button>
             </>
           )}
-          <button className="danger-text-button" type="button" onClick={() => { setConfirmation('delete'); setActionError(null) }}>Excluir OS</button>
+          {!details.request_origin && <button className="danger-text-button" type="button" onClick={() => { setConfirmation('delete'); setActionError(null) }}>Excluir OS</button>}
         </div>
       </div>
 
@@ -254,6 +254,13 @@ export function MaintenanceDetailsPage() {
 
       {details.status === 'cancelled' && (
         <div className="cancelled-reason"><span className="eyebrow">Motivo do cancelamento</span><p>{details.cancellation_reason}</p></div>
+      )}
+
+      {details.request_origin && (
+        <section className="maintenance-request-origin" aria-labelledby="request-origin-title">
+          <div><span className="eyebrow">Origem no Portal da Academia</span><h2 id="request-origin-title">{details.request_origin.title}</h2><p><strong>Problema relatado:</strong> {details.request_origin.description}</p></div>
+          <Link className="secondary-button secondary-button--link" to={`/app/solicitacoes/${details.request_origin.maintenance_request_id}`}>Ver solicitação</Link>
+        </section>
       )}
 
       <MaintenanceFinancialSection

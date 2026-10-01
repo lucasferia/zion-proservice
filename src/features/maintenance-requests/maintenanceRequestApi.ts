@@ -1,10 +1,11 @@
 import { createClientId } from '../../lib/clientId'
+import { businessDateTimeToIso } from '../../lib/dateTime'
 import { getSupabaseClient } from '../../lib/supabase'
 import { friendlyDataError } from '../clients/clientApi'
 import { prepareMaintenancePhoto } from '../maintenances/maintenancePhotoProcessing'
 import { maintenancePhotoExtension, validateMaintenancePhoto } from '../maintenances/maintenancePhotoValidation'
 import { PortalAuthorizationError } from '../portal/portalApi'
-import type { InternalMaintenanceRequest, MaintenanceRequestSummary, RequestCriticality, RequestFilters, RequestPhoto } from './types'
+import type { InternalMaintenanceRequest, MaintenanceRequestSummary, RequestConversionInput, RequestCriticality, RequestFilters, RequestPhoto, TechnicalPriority } from './types'
 
 export const REQUEST_PHOTO_BUCKET = 'maintenance-request-photos'
 const SIGNED_URL_SECONDS = 300
@@ -18,6 +19,11 @@ function client() {
 function fail(error: { code?: string; message?: string } | null, fallback: string): never {
   if (error?.code === '42501' || error?.message?.includes('row-level security')) throw new PortalAuthorizationError()
   throw new Error(error ? friendlyDataError(error) : fallback)
+}
+
+function internalRequestError(error: { code?: string; message?: string } | null) {
+  if (error?.code && ['PT409', '55000', '22023', 'P0002'].includes(error.code) && error.message) return error.message
+  return friendlyDataError(error)
 }
 
 export async function createPortalMaintenanceRequest(locationId: string, input: { equipmentId: string; title: string; description: string; criticality: RequestCriticality; submissionKey: string }) {
@@ -94,7 +100,7 @@ export async function removePortalRequestPhoto(locationId: string, requestId: st
 
 export async function listInternalMaintenanceRequests(organizationId: string, search: string, filters: RequestFilters, page: number, pageSize = 20) {
   const { data, error } = await client().rpc('internal_list_maintenance_requests', { target_organization_id: organizationId, search_term: search || null, filter_status: filters.status || null, filter_criticality: filters.criticality || null, page_number: page, page_size: pageSize })
-  if (error) throw new Error(friendlyDataError(error))
+  if (error) throw new Error(internalRequestError(error))
   const items = (data ?? []) as MaintenanceRequestSummary[]
   return { items, total: Number(items[0]?.total_count ?? 0), pageCount: Math.max(1, Math.ceil(Number(items[0]?.total_count ?? 0) / pageSize)) }
 }
@@ -107,4 +113,38 @@ export async function getInternalMaintenanceRequest(organizationId: string, requ
   if (request.error) throw new Error(friendlyDataError(request.error))
   if (photos.error) throw new Error(friendlyDataError(photos.error))
   return { request: (request.data as unknown[] | null)?.[0] as InternalMaintenanceRequest | undefined, photos: await signPhotos((photos.data ?? []) as Omit<RequestPhoto, 'signed_url'>[]) }
+}
+
+export async function approveInternalMaintenanceRequest(organizationId: string, requestId: string, input: { priority: TechnicalPriority; publicResponse: string; internalNote: string }) {
+  const { error } = await client().rpc('internal_approve_maintenance_request', {
+    target_organization_id: organizationId, target_request_id: requestId, target_priority: input.priority,
+    response_to_academy: input.publicResponse.trim() || null, decision_note: input.internalNote.trim() || null,
+  })
+  if (error) throw new Error(internalRequestError(error))
+}
+
+export async function rejectInternalMaintenanceRequest(organizationId: string, requestId: string, input: { publicResponse: string; internalNote: string }) {
+  const { error } = await client().rpc('internal_reject_maintenance_request', {
+    target_organization_id: organizationId, target_request_id: requestId,
+    response_to_academy: input.publicResponse.trim(), decision_note: input.internalNote.trim() || null,
+  })
+  if (error) throw new Error(internalRequestError(error))
+}
+
+export async function convertInternalMaintenanceRequest(organizationId: string, requestId: string, input: RequestConversionInput) {
+  const { data, error } = await client().rpc('internal_convert_maintenance_request', {
+    target_organization_id: organizationId, target_request_id: requestId,
+    target_maintenance_type: input.maintenanceType, target_scheduled_at: businessDateTimeToIso(input.scheduledAt),
+    target_responsible_technician_id: input.responsibleTechnicianId,
+  })
+  if (error) throw new Error(internalRequestError(error))
+  const result = (data as { maintenance_id: string; work_order_number: string }[] | null)?.[0]
+  if (!result) throw new Error('A conversão não retornou a ordem de serviço criada.')
+  return result
+}
+
+export async function getMaintenanceRequestOrigin(organizationId: string, maintenanceId: string) {
+  const { data, error } = await client().rpc('internal_get_maintenance_request_origin', { target_organization_id: organizationId, target_maintenance_id: maintenanceId })
+  if (error) throw new Error(friendlyDataError(error))
+  return (data as { maintenance_request_id: string; title: string; description: string }[] | null)?.[0] ?? null
 }
