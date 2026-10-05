@@ -13,6 +13,7 @@ export const MAINTENANCE_STATUSES = [
 export type MaintenanceType = (typeof MAINTENANCE_TYPES)[number]['value']
 export type MaintenanceStatus = (typeof MAINTENANCE_STATUSES)[number]['value']
 export type EditableMaintenanceStatus = Extract<MaintenanceStatus, 'draft' | 'in_progress'>
+export type MaintenanceDiscountType = 'percentage' | 'fixed'
 
 export type MaintenanceSummary = {
   id: string
@@ -59,6 +60,9 @@ export type MaintenancePart = {
 
 export type MaintenanceDetails = MaintenanceSummary & {
   labor_amount: number
+  discount_type: MaintenanceDiscountType
+  discount_value: number
+  discount_amount: number
   diagnosis: string | null
   service_performed: string | null
   notes: string | null
@@ -83,6 +87,8 @@ export type MaintenanceInput = {
   notes: string
   responsible_technician_id: string
   labor_amount: string
+  discount_type: MaintenanceDiscountType
+  discount_value: string
 }
 
 export type MaintenanceFilters = {

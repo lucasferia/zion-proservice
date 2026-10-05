@@ -20,6 +20,7 @@ const initialValue: MaintenanceInput = {
   client_id: '', client_location_id: '', equipment_id: '', maintenance_type: 'preventive',
   status: 'draft', scheduled_at: '2026-09-02T14:00', next_return_date: datePlusDays(30),
   diagnosis: '', service_performed: '', notes: '', responsible_technician_id: 'user-a', labor_amount: '0',
+  discount_type: 'percentage', discount_value: '0',
 }
 
 describe('MaintenanceForm', () => {
@@ -64,5 +65,28 @@ describe('MaintenanceForm', () => {
       client_id: 'client-a', client_location_id: 'location-a', equipment_id: 'equipment-b',
       next_return_date: initialValue.next_return_date,
     }))
+  })
+
+  it('recalcula a prévia e zera o valor ao trocar o tipo do desconto', async () => {
+    const user = userEvent.setup()
+    render(<MaintenanceForm options={options} initialValue={{ ...initialValue, labor_amount: '800', discount_value: '10' }} materialAmount={200} submitLabel="Criar OS" onSubmit={vi.fn()} />)
+
+    expect(screen.getByLabelText('Prévia da precificação')).toHaveTextContent('R$ 1.000,00')
+    expect(screen.getByLabelText('Prévia da precificação')).toHaveTextContent('R$ 100,00')
+    expect(screen.getByLabelText('Prévia da precificação')).toHaveTextContent('R$ 900,00')
+
+    await user.click(screen.getByRole('radio', { name: 'R$' }))
+    expect(screen.getByLabelText('Desconto')).toHaveValue('0')
+    expect(screen.getByLabelText('Prévia da precificação')).toHaveTextContent('R$ 1.000,00')
+  })
+
+  it('impede salvar desconto fixo maior que o subtotal', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    render(<MaintenanceForm options={options} initialValue={{ ...initialValue, client_id: 'client-a', equipment_id: 'equipment-a', labor_amount: '50', discount_type: 'fixed', discount_value: '100' }} submitLabel="Criar OS" onSubmit={onSubmit} />)
+
+    await user.click(screen.getByRole('button', { name: /Criar OS/ }))
+    expect(screen.getByText('O desconto em reais não pode ultrapassar o subtotal da OS.')).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
   })
 })

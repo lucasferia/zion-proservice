@@ -75,6 +75,8 @@ describe('páginas do Portal da Academia', () => {
     expect(screen.getByRole('heading', { name: /Sua academia,?\s*no contexto certo/i })).toBeInTheDocument()
     expect(screen.getByText('Portal ativo')).toBeInTheDocument()
     expect(screen.getAllByText('Unidade Centro').length).toBeGreaterThan(0)
+    expect(screen.getByText('Acompanhamento da solicitação até a conversão em OS')).toBeInTheDocument()
+    expect(screen.queryByText('Histórico de serviços')).not.toBeInTheDocument()
     expect(screen.queryByText(/pagamentos/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/financeiro/i)).not.toBeInTheDocument()
   })

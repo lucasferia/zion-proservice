@@ -6,6 +6,7 @@ import { BUSINESS_TIMEZONE } from '../../lib/dateTime'
 import { formatInventoryCurrency, formatInventoryQuantity } from '../inventory/formatters'
 import { formatMaintenanceDate } from '../maintenances/formatters'
 import { getMaintenanceStatusLabel, getMaintenanceTypeLabel } from '../maintenances/types'
+import { maintenanceDiscountLabel, roundMaintenanceCurrency } from '../maintenances/pricing'
 import { formatPaymentCurrency, formatPaymentDate, formatPaymentDateTime } from '../payments/formatters'
 import { getPaymentMethodLabel, getPaymentStatusLabel } from '../payments/types'
 import { formatReturnDate } from '../returns/formatters'
@@ -34,6 +35,7 @@ export function MaintenancePrintableDocument({ record, onPhotoSettled }: Documen
     (total, part) => total + Number(part.quantity * part.unit_charge_amount),
     0,
   )
+  const subtotalAmount = roundMaintenanceCurrency(materialsCharged + Number(maintenance.labor_amount))
   const before = record.photos.filter((photo) => photo.kind === 'before')
   const after = record.photos.filter((photo) => photo.kind === 'after')
   const partsLabel = maintenance.status === 'completed' ? 'Peças consumidas' : maintenance.status === 'cancelled' ? 'Planejamento não consumido' : 'Peças planejadas'
@@ -86,7 +88,9 @@ export function MaintenancePrintableDocument({ record, onPhotoSettled }: Documen
         <div className="print-financial-summary">
           <div><span>Materiais</span><strong>{formatPaymentCurrency(materialsCharged)}</strong></div>
           <div><span>Mão de obra</span><strong>{formatPaymentCurrency(Number(maintenance.labor_amount))}</strong></div>
-          <div><span>Valor da OS</span><strong>{formatPaymentCurrency(Number(summary.maintenance_total))}</strong></div>
+          <div><span>Subtotal</span><strong>{formatPaymentCurrency(subtotalAmount)}</strong></div>
+          <div><span>Desconto · {maintenanceDiscountLabel(maintenance.discount_type, maintenance.discount_value)}</span><strong>− {formatPaymentCurrency(Number(maintenance.discount_amount))}</strong></div>
+          <div><span>Valor final da OS</span><strong>{formatPaymentCurrency(Number(summary.maintenance_total))}</strong></div>
           <div><span>Total recebido</span><strong>{formatPaymentCurrency(Number(summary.received_total))}</strong></div>
           <div><span>Pendente registrado</span><strong>{formatPaymentCurrency(Number(summary.pending_total))}</strong></div>
           <div><span>Saldo a receber</span><strong>{formatPaymentCurrency(receivedBalance)}</strong></div>

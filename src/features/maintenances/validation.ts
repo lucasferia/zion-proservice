@@ -1,16 +1,30 @@
 import type { FieldErrors } from '../clients/validation'
 import { todayValue } from '../returns/formatters'
 import type { MaintenanceInput, MaintenancePartInput } from './types'
+import { calculateMaintenancePricing } from './pricing'
 
 export function parseDecimal(value: string) {
-  const normalized = value.trim().replace(',', '.')
+  const trimmed = value.trim().replace(/\s/g, '')
+  const normalized = trimmed.includes(',')
+    ? trimmed.replace(/\./g, '').replace(',', '.')
+    : trimmed
   if (!normalized) return Number.NaN
   return Number(normalized)
 }
 
-export function validateMaintenance(input: MaintenanceInput): FieldErrors<MaintenanceInput> {
+function decimalPlaces(value: string) {
+  const normalized = value.trim().replace(/\s/g, '')
+  const separator = Math.max(normalized.lastIndexOf(','), normalized.lastIndexOf('.'))
+  return separator < 0 ? 0 : normalized.length - separator - 1
+}
+
+export function validateMaintenance(
+  input: MaintenanceInput,
+  materialAmount = 0,
+): FieldErrors<MaintenanceInput> {
   const errors: FieldErrors<MaintenanceInput> = {}
   const laborAmount = parseDecimal(input.labor_amount)
+  const discountValue = parseDecimal(input.discount_value)
 
   if (!input.client_id) errors.client_id = 'Selecione um cliente.'
   if (!input.equipment_id) errors.equipment_id = 'Selecione o equipamento atendido.'
@@ -38,6 +52,26 @@ export function validateMaintenance(input: MaintenanceInput): FieldErrors<Mainte
   if (input.notes.length > 3000) errors.notes = 'As observações devem ter no máximo 3.000 caracteres.'
   if (!Number.isFinite(laborAmount) || laborAmount < 0 || laborAmount > 999999999999.99) {
     errors.labor_amount = 'Informe um valor de mão de obra válido, igual ou maior que zero.'
+  }
+  if (!['percentage', 'fixed'].includes(input.discount_type)) {
+    errors.discount_type = 'Selecione um tipo de desconto válido.'
+  }
+  if (!Number.isFinite(discountValue) || discountValue < 0) {
+    errors.discount_value = 'Informe um desconto válido, igual ou maior que zero.'
+  } else if (input.discount_type === 'percentage' && discountValue > 100) {
+    errors.discount_value = 'O desconto percentual deve estar entre 0 e 100.'
+  } else if (input.discount_type === 'fixed' && decimalPlaces(input.discount_value) > 2) {
+    errors.discount_value = 'O desconto em reais deve usar no máximo duas casas decimais.'
+  } else if (Number.isFinite(laborAmount)) {
+    const pricing = calculateMaintenancePricing(
+      laborAmount,
+      materialAmount,
+      input.discount_type,
+      discountValue,
+    )
+    if (pricing.discountAmount > pricing.subtotal || pricing.total < 0) {
+      errors.discount_value = 'O desconto em reais não pode ultrapassar o subtotal da OS.'
+    }
   }
 
   return errors

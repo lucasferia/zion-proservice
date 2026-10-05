@@ -13,8 +13,11 @@ const record: MaintenancePrintRecord = {
     status: 'completed',
     scheduled_at: '2026-08-31T13:00:00Z',
     next_return_date: '2026-09-30',
-    total_amount: 500,
+    total_amount: 450,
     labor_amount: 320,
+    discount_type: 'percentage',
+    discount_value: 10,
+    discount_amount: 50,
     client_id: 'client-1',
     client_name: 'Academia Horizonte',
     client_location_id: 'location-1',
@@ -55,11 +58,11 @@ const record: MaintenancePrintRecord = {
     }],
   },
   payment_summary: {
-    maintenance_total: 500,
+    maintenance_total: 450,
     active_total: 300,
     received_total: 200,
     pending_total: 100,
-    balance_amount: 300,
+    balance_amount: 250,
   },
   payments: [{
     id: 'payment-1',
@@ -131,7 +134,9 @@ describe('MaintenancePrintableDocument', () => {
     expect(within(parts).getByText('Correia')).toBeInTheDocument()
     expect(within(parts).getByText('R$ 180,00')).toBeInTheDocument()
     expect(within(parts).queryByText('R$ 80,00')).not.toBeInTheDocument()
-    expect(screen.getByText('R$ 300,00')).toBeInTheDocument()
+    expect(screen.getByText('R$ 250,00')).toBeInTheDocument()
+    expect(screen.getByText('Desconto · 10%')).toBeInTheDocument()
+    expect(screen.getByText('− R$ 50,00')).toBeInTheDocument()
     expect(screen.getByText('Lançamento duplicado')).toBeInTheDocument()
     expect(screen.getByText('Revisar tensão da correia.')).toBeInTheDocument()
 

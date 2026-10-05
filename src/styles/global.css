@@ -2741,6 +2741,26 @@ textarea:focus-visible,
 .maintenance-form .money-input:focus-within { border-color: var(--zion-primary-bright); box-shadow: 0 0 0 3px rgb(0 120 212 / 13%); }
 .maintenance-form .money-input span { display: grid; height: 46px; padding: 0 13px; color: #8493a7; background: #151e29; border-right: 1px solid #344154; font-size: 0.68rem; place-items: center; }
 .maintenance-form .money-input input { border: 0; border-radius: 0; box-shadow: none; }
+.maintenance-pricing-editor { display: grid; padding: clamp(18px, 3vw, 28px); background: linear-gradient(135deg, rgb(0 120 212 / 9%), transparent 44%), #0d131b; border: 1px solid #2a3a4d; border-radius: var(--zion-radius-md); gap: 22px; }
+.maintenance-pricing-editor__fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, .7fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.maintenance-discount-type { min-width: 0; margin: 0; padding: 0; border: 0; }
+.maintenance-discount-type legend { margin-bottom: 8px; color: var(--zion-text); font-size: .72rem; font-weight: 700; }
+.maintenance-discount-type > div { display: grid; overflow: hidden; min-height: 48px; border: 1px solid #344154; border-radius: 9px; grid-template-columns: repeat(2, 1fr); }
+.maintenance-discount-type label { position: relative; display: grid; cursor: pointer; place-items: center; }
+.maintenance-discount-type label + label { border-left: 1px solid #344154; }
+.maintenance-discount-type input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.maintenance-discount-type label span { display: grid; width: 100%; height: 100%; color: #91a1b4; font-family: 'Barlow Condensed', Impact, sans-serif; font-size: 1.25rem; font-weight: 700; place-items: center; transition: color 160ms ease, background 160ms ease, box-shadow 160ms ease; }
+.maintenance-discount-type input:checked + span { color: #e7f5ff; background: rgb(0 120 212 / 24%); box-shadow: inset 0 -3px 0 var(--zion-primary-bright); }
+.maintenance-discount-type input:focus-visible + span { outline: 2px solid #8fd0ff; outline-offset: -4px; }
+.maintenance-pricing-preview { display: grid; overflow: hidden; border: 1px solid #31445a; border-radius: var(--zion-radius-sm); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.maintenance-pricing-preview > div { min-width: 0; padding: 18px; border-right: 1px solid #31445a; }
+.maintenance-pricing-preview > div:last-child { border-right: 0; }
+.maintenance-pricing-preview span,.maintenance-pricing-preview strong,.maintenance-pricing-preview small { display: block; }
+.maintenance-pricing-preview span { color: #7f93aa; font-size: .58rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.maintenance-pricing-preview strong { margin-top: 8px; font-family: 'Barlow Condensed', Impact, sans-serif; font-size: 1.7rem; }
+.maintenance-pricing-preview small { margin-top: 5px; color: #718198; font-size: .62rem; }
+.maintenance-pricing-preview__total { background: rgb(0 120 212 / 13%); box-shadow: inset 3px 0 0 var(--zion-primary-bright); }
+.maintenance-pricing-preview__total strong { color: #8fd0ff; }
 
 .maintenance-details__heading {
   display: flex;
@@ -3122,6 +3142,8 @@ textarea:focus-visible,
 .maintenance-pricing-summary strong { margin-top: 9px; color: #cbd8e5; font-family: 'Barlow Condensed', Impact, sans-serif; font-size: 1.25rem; line-height: 1; }
 .maintenance-pricing-summary__total { background: rgb(0 120 212 / 10%); box-shadow: inset 3px 0 0 var(--zion-primary); }
 .maintenance-pricing-summary__total strong { color: #8fd0ff; }
+.maintenance-pricing-summary--discount { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.maintenance-pricing-summary__discount strong { color: #f7c56d; }
 
 .maintenance-parts-ledger { overflow: hidden; background: #0d131b; border: 1px solid var(--zion-border); border-radius: var(--zion-radius-md); }
 .maintenance-parts-ledger__header,
@@ -3420,6 +3442,12 @@ textarea:focus-visible,
   .maintenance-pricing-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .maintenance-pricing-summary > :nth-child(2) { border-right: 0; }
   .maintenance-pricing-summary > :nth-child(-n + 2) { border-bottom: 1px solid #263447; }
+  .maintenance-pricing-summary--discount { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .maintenance-pricing-summary--discount > div { border-bottom: 1px solid #263447; }
+  .maintenance-pricing-summary--discount > :nth-child(3n) { border-right: 0; }
+  .maintenance-pricing-summary--discount > :nth-last-child(-n + 3) { border-bottom: 0; }
+  .maintenance-pricing-editor__fields { grid-template-columns: 1fr 1fr; }
+  .maintenance-pricing-editor__fields > :first-child { grid-column: 1 / -1; }
   .parts-plan-row__actions { grid-column: 1 / -1; justify-content: flex-end; }
   .maintenance-parts-ledger__header,
   .maintenance-parts-ledger article { grid-template-columns: minmax(210px, 1fr) minmax(100px, 0.5fr) minmax(120px, 0.5fr); }
@@ -3684,6 +3712,14 @@ textarea:focus-visible,
   .maintenance-pricing-summary { grid-template-columns: 1fr; }
   .maintenance-pricing-summary > div { border-right: 0; border-bottom: 1px solid #263447; }
   .maintenance-pricing-summary > div:last-child { border-bottom: 0; }
+  .maintenance-pricing-summary--discount { grid-template-columns: 1fr; }
+  .maintenance-pricing-summary--discount > div { border-right: 0; border-bottom: 1px solid #263447; }
+  .maintenance-pricing-summary--discount > :nth-last-child(-n + 3) { border-bottom: 1px solid #263447; }
+  .maintenance-pricing-summary--discount > div:last-child { border-bottom: 0; }
+  .maintenance-pricing-editor__fields,.maintenance-pricing-preview { grid-template-columns: 1fr; }
+  .maintenance-pricing-editor__fields > :first-child { grid-column: auto; }
+  .maintenance-pricing-preview > div { border-right: 0; border-bottom: 1px solid #31445a; }
+  .maintenance-pricing-preview > div:last-child { border-bottom: 0; }
   .maintenance-parts-ledger__header { display: none; }
   .maintenance-parts-ledger article { padding: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .maintenance-parts-ledger article > :first-child { grid-column: 1 / -1; }

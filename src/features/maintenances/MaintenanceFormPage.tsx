@@ -49,6 +49,8 @@ function createInitialInput(
       ? currentUserId
       : options.technicians[0]?.user_id ?? '',
     labor_amount: '0',
+    discount_type: 'percentage',
+    discount_value: '0',
   }
 }
 
@@ -138,6 +140,10 @@ export function EditMaintenancePage() {
       <MaintenanceForm
         options={compatibleOptions}
         initialValue={maintenanceToInput(details)}
+        materialAmount={details.parts.reduce(
+          (total, part) => total + part.quantity * part.unit_charge_amount,
+          0,
+        )}
         isEditing
         submitLabel="Salvar alterações"
         onSubmit={async (input) => {

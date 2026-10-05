@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { datePlusDays } from '../returns/formatters'
 import type { MaintenanceInput } from './types'
 import {
+  parseDecimal,
   validateCompletion,
   validateMaintenance,
   validateMaintenancePart,
@@ -20,11 +21,28 @@ const validInput: MaintenanceInput = {
   notes: '',
   responsible_technician_id: 'user-a',
   labor_amount: '350,50',
+  discount_type: 'percentage',
+  discount_value: '0',
 }
 
 describe('validações de manutenção', () => {
   it('aceita uma ordem de serviço válida com decimal brasileiro', () => {
     expect(validateMaintenance(validInput)).toEqual({})
+  })
+
+  it('valida desconto percentual, fixo e subtotal reduzido', () => {
+    expect(validateMaintenance({ ...validInput, discount_value: '100' }, 149.5)).toEqual({})
+    expect(validateMaintenance({ ...validInput, discount_value: '100,01' }, 149.5).discount_value)
+      .toContain('entre 0 e 100')
+    expect(validateMaintenance({ ...validInput, discount_type: 'fixed', discount_value: '500,01' }, 149.5).discount_value)
+      .toContain('não pode ultrapassar')
+    expect(validateMaintenance({ ...validInput, discount_type: 'fixed', discount_value: '-1' }, 149.5).discount_value)
+      .toContain('igual ou maior que zero')
+  })
+
+  it('aceita entrada monetária brasileira com separador de milhar', () => {
+    expect(parseDecimal('1.234,56')).toBe(1234.56)
+    expect(validateMaintenance({ ...validInput, labor_amount: '1.000,00', discount_type: 'fixed', discount_value: '150,50' })).toEqual({})
   })
 
   it('exige os vínculos e a data do atendimento', () => {

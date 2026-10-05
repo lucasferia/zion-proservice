@@ -27,6 +27,7 @@ import {
   useMaintenanceFormOptions,
 } from './maintenanceQueries'
 import { MaintenanceStatusBadge } from './MaintenanceStatusBadge'
+import { maintenanceDiscountLabel, roundMaintenanceCurrency } from './pricing'
 import {
   getMaintenanceTypeLabel,
   isMaintenanceOpen,
@@ -69,6 +70,7 @@ export function MaintenanceDetailsPage() {
     (total, part) => total + part.quantity * part.unit_charge_amount,
     0,
   )
+  const subtotalAmount = roundMaintenanceCurrency(chargedMaterialTotal + details.labor_amount)
 
   async function refreshAfterPartChange() {
     const [refreshed] = await Promise.all([
@@ -189,7 +191,7 @@ export function MaintenanceDetailsPage() {
           <div className="completion-checklist">
             <span>{details.parts.length} {details.parts.length === 1 ? 'item planejado' : 'itens planejados'}</span>
             <strong>{formatInventoryCurrency(details.total_amount)}</strong>
-            <small>{formatInventoryCurrency(chargedMaterialTotal)} em materiais + {formatInventoryCurrency(details.labor_amount)} de mão de obra</small>
+            <small>{formatInventoryCurrency(subtotalAmount)} de subtotal − {formatInventoryCurrency(details.discount_amount)} de desconto</small>
           </div>
           {completionErrors.length > 0 && <ul className="completion-errors">{completionErrors.map((item) => <li key={item}>{item}</li>)}</ul>}
           <div className="completion-return-summary">
@@ -238,6 +240,7 @@ export function MaintenanceDetailsPage() {
             <div><dt>Atendimento</dt><dd>{formatMaintenanceDate(details.scheduled_at)}</dd></div>
             <div><dt>Reagendamento</dt><dd>{details.next_return_date ? formatReturnDate(details.next_return_date) : 'Não informado'}</dd></div>
             <div><dt>Mão de obra</dt><dd>{formatMaintenanceCurrency(details.labor_amount)}</dd></div>
+            <div><dt>Desconto</dt><dd>{formatMaintenanceCurrency(details.discount_amount)}</dd></div>
             <div><dt>Total da OS</dt><dd>{formatMaintenanceCurrency(details.total_amount)}</dd></div>
             <div><dt>Peças</dt><dd>{details.part_count}</dd></div>
           </dl>
@@ -293,11 +296,13 @@ export function MaintenanceDetailsPage() {
           </div>
         </div>
 
-        <div className="maintenance-pricing-summary" aria-label="Resumo interno da precificação">
+        <div className="maintenance-pricing-summary maintenance-pricing-summary--discount" aria-label="Resumo interno da precificação">
           <div><span>Custo pago</span><strong>{formatInventoryCurrency(paidMaterialTotal)}</strong></div>
           <div><span>Cobrado em materiais</span><strong>{formatInventoryCurrency(chargedMaterialTotal)}</strong></div>
           <div><span>Mão de obra</span><strong>{formatInventoryCurrency(details.labor_amount)}</strong></div>
-          <div className="maintenance-pricing-summary__total"><span>Total da OS</span><strong>{formatInventoryCurrency(details.total_amount)}</strong></div>
+          <div><span>Subtotal</span><strong>{formatInventoryCurrency(subtotalAmount)}</strong></div>
+          <div className="maintenance-pricing-summary__discount"><span>Desconto · {maintenanceDiscountLabel(details.discount_type, details.discount_value)}</span><strong>− {formatInventoryCurrency(details.discount_amount)}</strong></div>
+          <div className="maintenance-pricing-summary__total"><span>Total final</span><strong>{formatInventoryCurrency(details.total_amount)}</strong></div>
         </div>
 
         {open ? (

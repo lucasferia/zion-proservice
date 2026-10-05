@@ -45,6 +45,8 @@ function normalizeMaintenance(input: MaintenanceInput) {
     notes: optional(input.notes),
     responsible_technician_id: input.responsible_technician_id,
     labor_amount: parseDecimal(input.labor_amount),
+    discount_type: input.discount_type,
+    discount_value: parseDecimal(input.discount_value),
   }
 }
 
@@ -62,6 +64,10 @@ export function friendlyMaintenanceError(error: { code?: string; message?: strin
     'não está ativo para consumo',
     'Cliente e unidade devem corresponder',
     'pagamentos ativos',
+    'desconto percentual',
+    'desconto em reais',
+    'desconto não pode ser negativo',
+    'tipo de desconto válido',
     'Somente ordens de serviço abertas',
     'Remova as fotos da ordem de serviço',
     'histórico financeiro não pode ser excluída',
@@ -130,6 +136,7 @@ export async function getMaintenanceDetails(organizationId: string, maintenanceI
       .select(`
         id, organization_id, work_order_number, maintenance_type, status,
         scheduled_at, next_return_date, diagnosis, service_performed, notes, total_amount, labor_amount,
+        discount_type, discount_value, discount_amount,
         client_id, client_location_id, equipment_id, responsible_technician_id,
         cancellation_reason, cancelled_at, cancelled_by, completed_at, completed_by,
         created_at, updated_at,
@@ -175,6 +182,9 @@ export async function getMaintenanceDetails(organizationId: string, maintenanceI
     notes: string | null
     total_amount: number
     labor_amount: number
+    discount_type: MaintenanceDetails['discount_type']
+    discount_value: number
+    discount_amount: number
     client_id: string
     client_location_id: string | null
     equipment_id: string
@@ -231,6 +241,9 @@ export async function getMaintenanceDetails(organizationId: string, maintenanceI
     next_return_date: row.next_return_date,
     total_amount: row.total_amount,
     labor_amount: row.labor_amount,
+    discount_type: row.discount_type,
+    discount_value: row.discount_value,
+    discount_amount: row.discount_amount,
     client_id: row.client_id,
     client_name: row.clients.name,
     client_location_id: row.client_location_id,
@@ -271,6 +284,8 @@ export async function createMaintenance(organizationId: string, input: Maintenan
     notes: normalized.notes,
     responsible_technician_id: normalized.responsible_technician_id,
     labor_amount: normalized.labor_amount,
+    discount_type: normalized.discount_type,
+    discount_value: normalized.discount_value,
   }
   const { data, error } = await supabase
     .from('maintenances')
@@ -411,5 +426,7 @@ export function maintenanceToInput(details: MaintenanceDetails): MaintenanceInpu
     notes: details.notes ?? '',
     responsible_technician_id: details.responsible_technician_id,
     labor_amount: String(details.labor_amount),
+    discount_type: details.discount_type,
+    discount_value: String(details.discount_value),
   }
 }

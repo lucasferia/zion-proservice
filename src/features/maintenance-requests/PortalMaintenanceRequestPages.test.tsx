@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -60,6 +60,37 @@ describe('solicitações no Portal',()=>{
     expect(createPortalMaintenanceRequest).toHaveBeenCalledOnce()
     finish?.('request-a')
     expect(uploadPortalRequestPhoto).not.toHaveBeenCalled()
+  })
+
+  it('contém o foco na confirmação, fecha com Escape e devolve ao acionador',async()=>{
+    const user=userEvent.setup()
+    render(wrapper(<CreatePortalMaintenanceRequestPage/>))
+    await screen.findByRole('option',{name:/Esteira 01/})
+    await user.selectOptions(screen.getByLabelText(/Equipamento/),'equipment-a')
+    await user.type(screen.getByLabelText(/Título/),'Ruído na esteira')
+    await user.type(screen.getByLabelText(/Descrição/),'O ruído ocorre durante todo o uso.')
+    const trigger=screen.getByRole('button',{name:'Revisar e enviar'})
+    await user.click(trigger)
+    const back=screen.getByRole('button',{name:'Voltar e revisar'})
+    const confirm=screen.getByRole('button',{name:'Confirmar envio'})
+    await waitFor(()=>expect(back).toHaveFocus())
+    await user.tab({shift:true})
+    expect(confirm).toHaveFocus()
+    await user.tab()
+    expect(back).toHaveFocus()
+    await user.keyboard('{Escape}')
+    await waitFor(()=>expect(trigger).toHaveFocus())
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ['approved','A aprovação confirma a análise técnica. O atendimento ainda não foi agendado e nenhuma OS foi criada.'],
+    ['converted','A solicitação originou uma OS, mas isso não significa que o serviço foi concluído. A execução continua no fluxo interno da Zion.'],
+  ] as const)('explica o alcance do estado %s no Portal',(status,guidance)=>{
+    vi.mocked(usePortalRequestDetails).mockReturnValue(query({request:{id:'request-a',title:'Ruído',description:'Relato',reported_criticality:'high',technical_priority:'high',status,equipment_name:'Esteira',equipment_category:'Cardio',location_name:'Centro',created_at:'2026-09-30T12:00:00Z',cancellation_reason:null,cancelled_at:null,public_response:'Retorno público.',decided_at:'2026-09-30T13:00:00Z',converted_at:status==='converted'?'2026-09-30T14:00:00Z':null,work_order_number:status==='converted'?'OS-001':null},photos:[]}) as never)
+    const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
+    render(<QueryClientProvider client={client}><MemoryRouter initialEntries={['/portal/solicitacoes/request-a']}><Routes><Route path="/portal/solicitacoes/:requestId" element={<PortalMaintenanceRequestDetailsPage/>}/></Routes></MemoryRouter></QueryClientProvider>)
+    expect(screen.getByText(guidance)).toBeInTheDocument()
   })
 
   it('renderiza lista vazia e detalhe indisponível sem enumerar outro tenant',()=>{

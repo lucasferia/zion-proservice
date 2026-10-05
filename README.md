@@ -109,3 +109,10 @@ Antes de `db push`, revise a lista de migrations com `npx supabase migration lis
 ## Identidade e processo
 
 A interface usa o design system Zion: dark mode, azul `#0078D4`, Manrope na UI e Barlow Condensed em títulos e métricas. Os assets oficiais ficam em `Imagens/`. Regras de arquitetura, segurança e fluxo de trabalho estão em `.agents/`.
+
+## Homologação do Portal da Academia
+
+- [Roteiro de homologação para Gabriel e Lucas](docs/roteiro-homologacao-zion-portal.md)
+- [Guia rápido de entrega para Lucas](docs/guia-rapido-zion-portal.md)
+
+Esses materiais preparam o teste conjunto, mas não representam aceite do cliente. Câmera e galeria permanecem pendentes até validação em aparelhos físicos.

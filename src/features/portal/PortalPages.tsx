@@ -124,13 +124,13 @@ export function PortalHomePage() {
         </article>
         <article className="portal-info-panel portal-info-panel--muted">
           <span className="portal-panel-index">02</span>
-          <p className="eyebrow">Próximas etapas</p>
+          <p className="eyebrow">Recursos disponíveis</p>
           <h2>Um canal direto com a Zion</h2>
           <p>Consulte o parque da unidade e envie relatos de manutenção com fotos, sem gerar uma ordem de serviço automaticamente.</p>
-          <ul aria-label="Recursos planejados">
+          <ul aria-label="Recursos disponíveis no Portal">
             <li><span aria-hidden="true" />Cadastro seguro de equipamentos</li>
-            <li><span aria-hidden="true" />Solicitações de atendimento disponíveis</li>
-            <li><span aria-hidden="true" />Histórico de serviços</li>
+            <li><span aria-hidden="true" />Solicitações de atendimento com fotos</li>
+            <li><span aria-hidden="true" />Acompanhamento da solicitação até a conversão em OS</li>
           </ul>
         </article>
       </section>
