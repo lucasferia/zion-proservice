@@ -1,3 +1,5 @@
+import type { MaintenanceStatus } from '../maintenances/types'
+
 export type RequestCriticality = 'low' | 'medium' | 'high' | 'critical'
 export type TechnicalPriority = RequestCriticality
 export type RequestStatus = 'pending' | 'cancelled' | 'approved' | 'rejected' | 'converted'
@@ -19,6 +21,7 @@ export type MaintenanceRequestSummary = {
   decided_at?: string | null
   converted_at?: string | null
   work_order_number?: string | null
+  maintenance_status?: MaintenanceStatus | null
   total_count: number
 }
 
@@ -31,6 +34,7 @@ export type PortalMaintenanceRequest = Omit<MaintenanceRequestSummary, 'total_co
   decided_at: string | null
   converted_at: string | null
   work_order_number: string | null
+  maintenance_status: MaintenanceStatus | null
 }
 
 export type InternalMaintenanceRequest = Omit<MaintenanceRequestSummary, 'total_count'> & {

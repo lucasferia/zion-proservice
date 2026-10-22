@@ -1,10 +1,10 @@
 import { getMaintenanceStatusLabel, type MaintenanceStatus } from './types'
 
-export function MaintenanceStatusBadge({ status }: { status: MaintenanceStatus }) {
+export function MaintenanceStatusBadge({ status, label }: { status: MaintenanceStatus; label?: string }) {
   return (
     <span className={`maintenance-status maintenance-status--${status}`}>
       <span aria-hidden="true" />
-      {getMaintenanceStatusLabel(status)}
+      {label ?? getMaintenanceStatusLabel(status)}
     </span>
   )
 }
