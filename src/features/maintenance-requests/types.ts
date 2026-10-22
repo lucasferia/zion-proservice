@@ -22,6 +22,9 @@ export type MaintenanceRequestSummary = {
   converted_at?: string | null
   work_order_number?: string | null
   maintenance_status?: MaintenanceStatus | null
+  maintenance_scheduled_at?: string | null
+  maintenance_completed_at?: string | null
+  maintenance_cancelled_at?: string | null
   total_count: number
 }
 
@@ -35,6 +38,9 @@ export type PortalMaintenanceRequest = Omit<MaintenanceRequestSummary, 'total_co
   converted_at: string | null
   work_order_number: string | null
   maintenance_status: MaintenanceStatus | null
+  maintenance_scheduled_at: string | null
+  maintenance_completed_at: string | null
+  maintenance_cancelled_at: string | null
 }
 
 export type InternalMaintenanceRequest = Omit<MaintenanceRequestSummary, 'total_count'> & {

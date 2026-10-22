@@ -5594,6 +5594,24 @@ textarea:focus-visible,
 .request-badge--low,.request-badge--approved,.request-badge--converted { color: #86efac; border-color: rgb(34 197 94 / 42%); background: rgb(34 197 94 / 8%); }
 .request-card h2 { overflow-wrap:anywhere; margin: 22px 0 0; font-family:'Barlow Condensed',sans-serif; font-size:2rem; font-weight:600; line-height:1; text-transform:uppercase; }
 .request-card>p { display:-webkit-box; overflow:hidden; margin:13px 0 0; color:#91a0b2; font-size:.7rem; line-height:1.65; -webkit-box-orient:vertical; -webkit-line-clamp:3; }
+.portal-request-timeline { margin-top:18px; padding:clamp(24px,4vw,36px); background:#0f141c; border:1px solid #2a3646; }
+.portal-request-timeline__heading h2 { margin:8px 0 0; font-family:'Barlow Condensed',sans-serif; font-size:2rem; font-weight:600; text-transform:uppercase; }
+.portal-request-timeline ol { display:grid; margin:28px 0 0; padding:0; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); list-style:none; }
+.portal-request-timeline__step { position:relative; min-width:0; padding:24px 16px 0 0; border-top:1px solid #344458; }
+.portal-request-timeline__marker { position:absolute; top:-6px; left:0; width:11px; height:11px; background:#111923; border:2px solid #53657a; border-radius:50%; }
+.portal-request-timeline__step strong,.portal-request-timeline__step small,.portal-request-timeline__step time { display:block; }
+.portal-request-timeline__step strong { color:#dce7f2; font-size:.67rem; }
+.portal-request-timeline__step small { margin-top:6px; color:#7f90a3; font-size:.6rem; line-height:1.45; }
+.portal-request-timeline__step time { margin-top:8px; color:#79a8c8; font-size:.56rem; }
+.portal-request-timeline__step--complete .portal-request-timeline__marker { background:var(--zion-success); border-color:var(--zion-success); }
+.portal-request-timeline__step--current .portal-request-timeline__marker { background:var(--zion-primary-bright); border-color:#8ed3ff; box-shadow:0 0 0 5px rgb(0 120 212 / 14%); }
+.portal-request-timeline__step--upcoming { opacity:.62; }
+.portal-request-timeline__step--cancelled .portal-request-timeline__marker { background:var(--zion-danger); border-color:#ff9b9b; }
+.portal-request-timeline--compact { margin:20px 0 0; padding:0; background:transparent; border:0; }
+.portal-request-timeline--compact ol { margin:0; grid-template-columns:repeat(auto-fit,minmax(72px,1fr)); }
+.portal-request-timeline--compact .portal-request-timeline__step { padding:17px 8px 0 0; }
+.portal-request-timeline--compact .portal-request-timeline__step strong { font-size:.54rem; line-height:1.35; text-transform:uppercase; }
+.portal-request-timeline--compact .portal-request-timeline__step time { margin-top:4px; font-size:.5rem; }
 .request-card footer { display:flex; margin-top:auto; padding-top:24px; border-top:1px solid #263443; gap:16px; align-items:end; justify-content:space-between; }
 .request-card footer span,.request-card footer strong { display:block; }
 .request-card footer span { color:#6f8094; font-size:.55rem; letter-spacing:.08em; text-transform:uppercase; }
@@ -5705,6 +5723,13 @@ textarea:focus-visible,
   .request-confirm dl { grid-template-columns:1fr; }
   .request-confirm dl div { border-right:0; border-bottom:1px solid #293849; }
   .request-detail>header { min-height:290px; align-items:flex-start; flex-direction:column; justify-content:flex-end; }
+  .portal-request-timeline ol { grid-template-columns:1fr; }
+  .portal-request-timeline__step { padding:0 0 24px 24px; border-top:0; border-left:1px solid #344458; }
+  .portal-request-timeline__step:last-child { padding-bottom:0; }
+  .portal-request-timeline__marker { top:0; left:-6px; }
+  .portal-request-timeline--compact ol { grid-template-columns:repeat(auto-fit,minmax(72px,1fr)); }
+  .portal-request-timeline--compact .portal-request-timeline__step { padding:17px 8px 0 0; border-top:1px solid #344458; border-left:0; }
+  .portal-request-timeline--compact .portal-request-timeline__marker { top:-6px; left:0; }
   .request-facts { grid-template-columns:1fr; }
   .internal-request-list>a { grid-template-columns:1fr; }
   .request-readonly-note { flex-direction:column; }

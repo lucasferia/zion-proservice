@@ -85,30 +85,28 @@ describe('solicitações no Portal',()=>{
 
   it.each([
     ['approved','A aprovação confirma a análise técnica. O atendimento ainda não foi agendado e nenhuma OS foi criada.'],
-    ['converted','A solicitação originou uma OS. Acompanhe o status operacional acima.'],
+    ['converted','A solicitação originou uma OS. Veja abaixo o que já aconteceu e os próximos passos.'],
   ] as const)('explica o alcance do estado %s no Portal',(status,guidance)=>{
-    vi.mocked(usePortalRequestDetails).mockReturnValue(query({request:{id:'request-a',title:'Ruído',description:'Relato',reported_criticality:'high',technical_priority:'high',status,equipment_name:'Esteira',equipment_category:'Cardio',location_name:'Centro',created_at:'2026-09-30T12:00:00Z',cancellation_reason:null,cancelled_at:null,public_response:'Retorno público.',decided_at:'2026-09-30T13:00:00Z',converted_at:status==='converted'?'2026-09-30T14:00:00Z':null,work_order_number:status==='converted'?'OS-001':null,maintenance_status:status==='converted'?'draft':null},photos:[]}) as never)
+    vi.mocked(usePortalRequestDetails).mockReturnValue(query({request:{id:'request-a',title:'Ruído',description:'Relato',reported_criticality:'high',technical_priority:'high',status,equipment_name:'Esteira',equipment_category:'Cardio',location_name:'Centro',created_at:'2026-09-30T12:00:00Z',cancellation_reason:null,cancelled_at:null,public_response:'Retorno público.',decided_at:'2026-09-30T13:00:00Z',converted_at:status==='converted'?'2026-09-30T14:00:00Z':null,work_order_number:status==='converted'?'OS-001':null,maintenance_status:status==='converted'?'draft':null,maintenance_scheduled_at:status==='converted'?'2026-10-02T12:00:00Z':null,maintenance_completed_at:null,maintenance_cancelled_at:null},photos:[]}) as never)
     const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
     render(<QueryClientProvider client={client}><MemoryRouter initialEntries={['/portal/solicitacoes/request-a']}><Routes><Route path="/portal/solicitacoes/:requestId" element={<PortalMaintenanceRequestDetailsPage/>}/></Routes></MemoryRouter></QueryClientProvider>)
     expect(screen.getByText(guidance)).toBeInTheDocument()
   })
 
-  it.each([
-    ['draft','Pendente'],
-    ['in_progress','Em andamento'],
-    ['completed','Concluída'],
-    ['cancelled','Cancelada'],
-  ] as const)('exibe o status real %s da OS como %s',(maintenanceStatus,label)=>{
-    vi.mocked(usePortalRequestDetails).mockReturnValue(query({request:{id:'request-a',title:'Ruído',description:'Relato',reported_criticality:'high',technical_priority:'high',status:'converted',equipment_name:'Esteira',equipment_category:'Cardio',location_name:'Centro',created_at:'2026-09-30T12:00:00Z',cancellation_reason:null,cancelled_at:null,public_response:null,decided_at:'2026-09-30T13:00:00Z',converted_at:'2026-09-30T14:00:00Z',work_order_number:'OS-001',maintenance_status:maintenanceStatus},photos:[]}) as never)
+  it('exibe no detalhe o histórico e os próximos eventos da OS',()=>{
+    vi.mocked(usePortalRequestDetails).mockReturnValue(query({request:{id:'request-a',title:'Ruído',description:'Relato',reported_criticality:'high',technical_priority:'high',status:'converted',equipment_name:'Esteira',equipment_category:'Cardio',location_name:'Centro',created_at:'2026-09-30T12:00:00Z',cancellation_reason:null,cancelled_at:null,public_response:null,decided_at:'2026-09-30T13:00:00Z',converted_at:'2026-09-30T14:00:00Z',work_order_number:'OS-001',maintenance_status:'draft',maintenance_scheduled_at:'2026-10-02T12:00:00Z',maintenance_completed_at:null,maintenance_cancelled_at:null},photos:[]}) as never)
     const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
     render(<QueryClientProvider client={client}><MemoryRouter initialEntries={['/portal/solicitacoes/request-a']}><Routes><Route path="/portal/solicitacoes/:requestId" element={<PortalMaintenanceRequestDetailsPage/>}/></Routes></MemoryRouter></QueryClientProvider>)
-    expect(screen.getAllByText(label)).toHaveLength(2)
+    expect(screen.getByRole('region',{name:'Andamento do atendimento'})).toBeInTheDocument()
+    expect(screen.getByText('OS criada')).toBeInTheDocument()
+    expect(screen.getByText('Atendimento previsto')).toBeInTheDocument()
+    expect(screen.getByText('Conclusão')).toBeInTheDocument()
   })
 
   it('exibe o status da OS também na listagem do Portal',()=>{
-    vi.mocked(usePortalRequestList).mockReturnValue({deferred:'',query:query({items:[{id:'request-a',title:'Ruído',description:'Relato',reported_criticality:'high',status:'converted',equipment_name:'Esteira',created_at:'2026-09-30T12:00:00Z',technical_priority:'high',work_order_number:'OS-001',maintenance_status:'in_progress',total_count:1}],total:1,pageCount:1})} as never)
+    vi.mocked(usePortalRequestList).mockReturnValue({deferred:'',query:query({items:[{id:'request-a',title:'Ruído',description:'Relato',reported_criticality:'high',status:'converted',equipment_name:'Esteira',created_at:'2026-09-30T12:00:00Z',technical_priority:'high',work_order_number:'OS-001',maintenance_status:'in_progress',maintenance_scheduled_at:'2026-10-02T12:00:00Z',maintenance_completed_at:null,maintenance_cancelled_at:null,total_count:1}],total:1,pageCount:1})} as never)
     render(<MemoryRouter><PortalMaintenanceRequestListPage/></MemoryRouter>)
-    expect(screen.getByText('Em andamento')).toBeInTheDocument()
+    expect(screen.getByText('Atendimento iniciado')).toBeInTheDocument()
   })
 
   it('renderiza lista vazia e detalhe indisponível sem enumerar outro tenant',()=>{
